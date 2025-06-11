@@ -1,3 +1,4 @@
+
 import { 
   Concours, 
   ConcoursApiResponse,
@@ -29,13 +30,17 @@ class ApiService {
       ...options,
     };
 
+    console.log(`API Request: ${config.method || 'GET'} ${url}`);
+    
     const response = await fetch(url, config);
     
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
     
-    return response.json();
+    const data = await response.json();
+    console.log(`API Response:`, data);
+    return data;
   }
 
   // Concours endpoints
@@ -45,10 +50,6 @@ class ApiService {
 
   async getConcoursById(id: number): Promise<ApiResponse<Concours>> {
     return this.request(`/concours/${id}`);
-  }
-
-  async getConcoursActifs(): Promise<ApiResponse<Concours[]>> {
-    return this.request('/concours?statut=ouvert');
   }
 
   // Candidat endpoints
@@ -61,6 +62,10 @@ class ApiService {
 
   async getCandidatById(id: number): Promise<ApiResponse<Candidat>> {
     return this.request(`/candidats/${id}`);
+  }
+
+  async getCandidatByNip(nip: string): Promise<ApiResponse<Candidat>> {
+    return this.request(`/candidats/nip/${nip}`);
   }
 
   async updateCandidat(id: number, data: Partial<Candidat>): Promise<ApiResponse<Candidat>> {
@@ -86,11 +91,15 @@ class ApiService {
     return this.request(`/participations/numero/${numero}`);
   }
 
+  async getParticipationsByCandidatId(candidatId: number): Promise<ApiResponse<Participation[]>> {
+    return this.request(`/candidats/${candidatId}/participations`);
+  }
+
   // Document endpoints
-  async uploadDocument(candidatId: number, file: File, type: string): Promise<ApiResponse<Document>> {
+  async uploadDocument(participationId: number, file: File, type: string): Promise<ApiResponse<Document>> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('candidat_id', candidatId.toString());
+    formData.append('participation_id', participationId.toString());
     formData.append('type', type);
 
     return this.request('/documents', {
@@ -100,8 +109,8 @@ class ApiService {
     });
   }
 
-  async getDocumentsByCandidat(candidatId: number): Promise<ApiResponse<Document[]>> {
-    return this.request(`/candidats/${candidatId}/documents`);
+  async getDocumentsByParticipation(participationId: number): Promise<ApiResponse<Document[]>> {
+    return this.request(`/participations/${participationId}/documents`);
   }
 
   // Paiement endpoints
@@ -116,31 +125,10 @@ class ApiService {
     return this.request(`/participations/${participationId}/paiement`);
   }
 
-  // Etablissement endpoints
-  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
-    return this.request('/etablissements');
-  }
-
-  async getEtablissementById(id: number): Promise<ApiResponse<Etablissement>> {
-    return this.request(`/etablissements/${id}`);
-  }
-
-  // Filiere endpoints
-  async getFilieres(): Promise<ApiResponse<Filiere[]>> {
-    return this.request('/filieres');
-  }
-
-  async getFiliereById(id: number): Promise<ApiResponse<Filiere>> {
-    return this.request(`/filieres/${id}`);
-  }
-
-  // Niveau endpoints
-  async getNiveaux(): Promise<ApiResponse<Niveau[]>> {
-    return this.request('/niveaux');
-  }
-
-  async getNiveauById(id: number): Promise<ApiResponse<Niveau>> {
-    return this.request(`/niveaux/${id}`);
+  async validatePaiement(paiementId: number): Promise<ApiResponse<Paiement>> {
+    return this.request(`/paiements/${paiementId}/validate`, {
+      method: 'POST',
+    });
   }
 
   // Province endpoints
@@ -148,55 +136,35 @@ class ApiService {
     return this.request('/provinces');
   }
 
-  async getProvinceById(id: number): Promise<ApiResponse<Province>> {
-    return this.request(`/provinces/${id}`);
+  // Niveau endpoints
+  async getNiveaux(): Promise<ApiResponse<Niveau[]>> {
+    return this.request('/niveaux');
   }
 
-  // Matiere endpoints
-  async getMatieres(): Promise<ApiResponse<Matiere[]>> {
-    return this.request('/matieres');
+  // Etablissement endpoints
+  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
+    return this.request('/etablissements');
   }
 
-  async getMatiereById(id: number): Promise<ApiResponse<Matiere>> {
-    return this.request(`/matieres/${id}`);
+  // Authentication/Session simulation
+  async createSession(participationId: number): Promise<{ sessionId: string; participationId: number }> {
+    // Simulation d'une session locale
+    const sessionId = `session_${Date.now()}_${participationId}`;
+    localStorage.setItem('gabconcours_session', JSON.stringify({
+      sessionId,
+      participationId,
+      createdAt: new Date().toISOString()
+    }));
+    return { sessionId, participationId };
   }
 
-  async getMatieresByConcours(concoursId: number): Promise<ApiResponse<Matiere[]>> {
-    return this.request(`/concours/${concoursId}/matieres`);
+  getSession(): { sessionId: string; participationId: number } | null {
+    const session = localStorage.getItem('gabconcours_session');
+    return session ? JSON.parse(session) : null;
   }
 
-  // Authentication endpoints
-  async login(email: string, password: string): Promise<ApiResponse<{ token: string; candidat: Candidat }>> {
-    return this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-  }
-
-  async register(data: Partial<Candidat> & { password: string }): Promise<ApiResponse<{ token: string; candidat: Candidat }>> {
-    return this.request('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async logout(): Promise<ApiResponse<null>> {
-    return this.request('/auth/logout', {
-      method: 'POST',
-    });
-  }
-
-  // Photo endpoints
-  async uploadPhoto(candidatId: number, file: File): Promise<ApiResponse<any>> {
-    const formData = new FormData();
-    formData.append('photo', file);
-    formData.append('candidat_id', candidatId.toString());
-
-    return this.request('/photos', {
-      method: 'POST',
-      body: formData,
-      headers: {}, // Remove Content-Type for FormData
-    });
+  clearSession(): void {
+    localStorage.removeItem('gabconcours_session');
   }
 }
 

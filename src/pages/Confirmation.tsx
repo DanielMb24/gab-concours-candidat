@@ -1,24 +1,78 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Copy } from 'lucide-react';
+import { CheckCircle, Copy, User, GraduationCap, MapPin, Calendar } from 'lucide-react';
 import Layout from '@/components/Layout';
+import { apiService } from '@/services/api';
+import { toast } from '@/hooks/use-toast';
 
 const Confirmation = () => {
   const { numeroCandidature } = useParams<{ numeroCandidature: string }>();
   const navigate = useNavigate();
 
+  const { data: participationResponse, isLoading, error } = useQuery({
+    queryKey: ['participation', numeroCandidature],
+    queryFn: () => apiService.getParticipationByNumero(numeroCandidature!),
+    enabled: !!numeroCandidature,
+  });
+
+  const participation = participationResponse?.data;
+
   const handleContinuer = () => {
-    navigate(`/documents/${numeroCandidature}`);
+    if (participation) {
+      // Créer une session pour cette participation
+      apiService.createSession(participation.id);
+      navigate(`/documents/${participation.id}`);
+    }
   };
 
   const copyToClipboard = () => {
     if (numeroCandidature) {
       navigator.clipboard.writeText(numeroCandidature);
+      toast({
+        title: "Copié !",
+        description: "Le numéro de candidature a été copié dans le presse-papiers",
+      });
     }
   };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-8 bg-muted rounded mb-4"></div>
+              <div className="h-4 bg-muted rounded mb-8"></div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !participation) {
+    return (
+      <Layout>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-destructive mb-4">
+              Candidature non trouvée
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              Le numéro de candidature {numeroCandidature} n'existe pas.
+            </p>
+            <Button onClick={() => navigate('/')}>
+              Retour à l'accueil
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -63,6 +117,37 @@ const Confirmation = () => {
                   <span>Copier</span>
                 </Button>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
+                <User className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Statut</p>
+                  <p className="text-sm text-muted-foreground capitalize">
+                    {participation.statut}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
+                <Calendar className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Date d'inscription</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(participation.created_at).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">Prochaines étapes</h4>
+              <ol className="list-decimal list-inside text-sm text-blue-700 space-y-1">
+                <li>Déposer vos documents justificatifs</li>
+                <li>Effectuer le paiement des frais d'inscription</li>
+                <li>Attendre la validation de votre dossier</li>
+              </ol>
             </div>
           </CardContent>
         </Card>
