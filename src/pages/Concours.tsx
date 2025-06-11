@@ -47,7 +47,8 @@ const ConcoursPage: React.FC = () => {
     );
   }
 
-  const concours: Concours[] = concoursResponse?.data?.data || [];
+  // Récupération directe du tableau de concours depuis la réponse
+  const concours: Concours[] = concoursResponse?.data || [];
 
   return (
     <Layout>
