@@ -1,6 +1,6 @@
-
 import { 
   Concours, 
+  ConcoursApiResponse,
   Candidat, 
   Participation, 
   Document, 
@@ -39,7 +39,7 @@ class ApiService {
   }
 
   // Concours endpoints
-  async getConcours(): Promise<ApiResponse<PaginatedResponse<Concours>>> {
+  async getConcours(): Promise<ConcoursApiResponse> {
     return this.request('/concours');
   }
 

@@ -44,20 +44,22 @@ export interface Composition {
   updated_at: string;
 }
 
+// Interface mise à jour pour correspondre à la structure de l'API
 export interface Concours {
   id: number;
-  nom: string;
-  description: string;
-  date_debut: string;
-  date_fin: string;
-  frais_inscription: number;
-  nombre_places: number;
-  statut: 'ouvert' | 'ferme' | 'termine';
-  etablissement_id: number;
-  filiere_id: number;
-  niveau_id: number;
-  created_at: string;
-  updated_at: string;
+  etablissement_id: string;
+  etablissement_nomets: string;
+  etablissement_photo: string;
+  niveau_id: string;
+  niveau_nomniv: string;
+  libcnc: string; // nom du concours
+  sescnc: string; // session
+  debcnc: string; // date début
+  fincnc: string; // date fin
+  stacnc: string; // statut (1=ouvert, 2=fermé, 3=terminé)
+  agecnc: string; // âge limite
+  fracnc: string; // frais inscription
+  etddos: string; // état dossier
 }
 
 export interface Document {
@@ -219,4 +221,9 @@ export interface PaginatedResponse<T> {
   last_page: number;
   per_page: number;
   total: number;
+}
+
+// Interface pour la réponse directe de l'API concours
+export interface ConcoursApiResponse {
+  data: Concours[];
 }

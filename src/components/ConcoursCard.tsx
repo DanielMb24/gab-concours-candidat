@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Users, DollarSign } from 'lucide-react';
+import { CalendarDays, MapPin, Users, DollarSign, GraduationCap } from 'lucide-react';
 import { Concours } from '@/types/entities';
 
 interface ConcoursCardProps {
@@ -20,14 +20,27 @@ const ConcoursCard: React.FC<ConcoursCardProps> = ({ concours }) => {
 
   const getStatutColor = (statut: string) => {
     switch (statut) {
-      case 'ouvert':
+      case '1':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'ferme':
+      case '2':
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'termine':
+      case '3':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+  };
+
+  const getStatutText = (statut: string) => {
+    switch (statut) {
+      case '1':
+        return 'Ouvert';
+      case '2':
+        return 'Fermé';
+      case '3':
+        return 'Terminé';
+      default:
+        return 'Inconnu';
     }
   };
 
@@ -39,25 +52,26 @@ const ConcoursCard: React.FC<ConcoursCardProps> = ({ concours }) => {
     });
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: string) => {
+    const numPrice = parseInt(price);
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'XOF',
       minimumFractionDigits: 0
-    }).format(price);
+    }).format(numPrice);
   };
 
   return (
     <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg line-clamp-2">{concours.nom}</CardTitle>
-          <Badge className={getStatutColor(concours.statut)}>
-            {concours.statut.charAt(0).toUpperCase() + concours.statut.slice(1)}
+          <CardTitle className="text-lg line-clamp-2">{concours.libcnc}</CardTitle>
+          <Badge className={getStatutColor(concours.stacnc)}>
+            {getStatutText(concours.stacnc)}
           </Badge>
         </div>
-        <CardDescription className="line-clamp-3">
-          {concours.description}
+        <CardDescription className="line-clamp-2">
+          {concours.etablissement_nomets} • Session {concours.sescnc}
         </CardDescription>
       </CardHeader>
 
@@ -65,17 +79,27 @@ const ConcoursCard: React.FC<ConcoursCardProps> = ({ concours }) => {
         <div className="space-y-3">
           <div className="flex items-center text-sm text-muted-foreground">
             <CalendarDays className="w-4 h-4 mr-2" />
-            <span>Du {formatDate(concours.date_debut)} au {formatDate(concours.date_fin)}</span>
+            <span>Du {formatDate(concours.debcnc)} au {formatDate(concours.fincnc)}</span>
           </div>
           
           <div className="flex items-center text-sm text-muted-foreground">
-            <Users className="w-4 h-4 mr-2" />
-            <span>{concours.nombre_places} places disponibles</span>
+            <GraduationCap className="w-4 h-4 mr-2" />
+            <span>{concours.niveau_nomniv}</span>
+          </div>
+          
+          <div className="flex items-center text-sm text-muted-foreground">
+            <MapPin className="w-4 h-4 mr-2" />
+            <span>{concours.etablissement_nomets}</span>
           </div>
           
           <div className="flex items-center text-sm text-muted-foreground">
             <DollarSign className="w-4 h-4 mr-2" />
-            <span className="font-medium">{formatPrice(concours.frais_inscription)}</span>
+            <span className="font-medium">{formatPrice(concours.fracnc)}</span>
+          </div>
+
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            <span>Âge limite: {concours.agecnc} ans</span>
           </div>
         </div>
       </CardContent>
@@ -84,9 +108,9 @@ const ConcoursCard: React.FC<ConcoursCardProps> = ({ concours }) => {
         <Button 
           onClick={handlePostuler}
           className="w-full"
-          disabled={concours.statut !== 'ouvert'}
+          disabled={concours.stacnc !== '1'}
         >
-          {concours.statut === 'ouvert' ? 'Postuler' : 'Concours fermé'}
+          {concours.stacnc === '1' ? 'Postuler' : 'Concours fermé'}
         </Button>
       </CardFooter>
     </Card>
