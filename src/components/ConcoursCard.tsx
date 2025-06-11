@@ -1,105 +1,94 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, GraduationCap, BookOpen } from 'lucide-react';
-import { Concours } from '@/services/api';
+import { CalendarDays, MapPin, Users, DollarSign } from 'lucide-react';
+import { Concours } from '@/types/entities';
 
 interface ConcoursCardProps {
   concours: Concours;
-  onPostuler: (concoursId: string) => void;
 }
 
-const ConcoursCard: React.FC<ConcoursCardProps> = ({ concours, onPostuler }) => {
+const ConcoursCard: React.FC<ConcoursCardProps> = ({ concours }) => {
+  const navigate = useNavigate();
+
+  const handlePostuler = () => {
+    navigate(`/candidature/${concours.id}`);
+  };
+
+  const getStatutColor = (statut: string) => {
+    switch (statut) {
+      case 'ouvert':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'ferme':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'termine':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
+      year: 'numeric',
       month: 'long',
-      year: 'numeric'
+      day: 'numeric'
     });
   };
 
-  const isInscriptionOuverte = () => {
-    const now = new Date();
-    const debut = new Date(concours.date_debut_inscription);
-    const fin = new Date(concours.date_fin_inscription);
-    return now >= debut && now <= fin;
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XOF',
+      minimumFractionDigits: 0
+    }).format(price);
   };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary">
-      <CardHeader className="pb-4">
+    <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
+      <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-bold text-foreground leading-tight">
-            {concours.nom}
-          </CardTitle>
-          <Badge 
-            variant={isInscriptionOuverte() ? "default" : "secondary"}
-            className={isInscriptionOuverte() ? "bg-green-500" : ""}
-          >
-            {isInscriptionOuverte() ? "Ouvert" : "Fermé"}
+          <CardTitle className="text-lg line-clamp-2">{concours.nom}</CardTitle>
+          <Badge className={getStatutColor(concours.statut)}>
+            {concours.statut.charAt(0).toUpperCase() + concours.statut.slice(1)}
           </Badge>
         </div>
+        <CardDescription className="line-clamp-3">
+          {concours.description}
+        </CardDescription>
       </CardHeader>
-      
-      <CardContent className="space-y-4">
+
+      <CardContent className="flex-grow">
         <div className="space-y-3">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4 text-primary" />
-            <span>{concours.etablissement}</span>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <CalendarDays className="w-4 h-4 mr-2" />
+            <span>Du {formatDate(concours.date_debut)} au {formatDate(concours.date_fin)}</span>
           </div>
           
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <GraduationCap className="h-4 w-4 text-primary" />
-            <span>{concours.filiere} - {concours.niveau}</span>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Users className="w-4 h-4 mr-2" />
+            <span>{concours.nombre_places} places disponibles</span>
           </div>
           
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 text-primary" />
-            <span>Inscription jusqu'au {formatDate(concours.date_fin_inscription)}</span>
-          </div>
-          
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 text-primary" />
-            <span>Épreuve: {formatDate(concours.date_epreuve)}</span>
-          </div>
-          
-          {concours.matiere && concours.matiere.length > 0 && (
-            <div className="flex items-start space-x-2 text-sm text-muted-foreground">
-              <BookOpen className="h-4 w-4 text-primary mt-0.5" />
-              <div className="flex flex-wrap gap-1">
-                {concours.matiere.map((matiere, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {matiere}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="pt-4 border-t">
-          <div className="flex items-center justify-between">
-            <div className="text-lg font-semibold text-primary">
-              {concours.frais_inscription?.toLocaleString()} FCFA
-            </div>
-            <Button
-              onClick={() => onPostuler(concours.id)}
-              disabled={!isInscriptionOuverte()}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {isInscriptionOuverte() ? "Postuler" : "Inscriptions fermées"}
-            </Button>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <DollarSign className="w-4 h-4 mr-2" />
+            <span className="font-medium">{formatPrice(concours.frais_inscription)}</span>
           </div>
         </div>
-        
-        {concours.session && (
-          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-            Session: {concours.session}
-          </div>
-        )}
       </CardContent>
+
+      <CardFooter>
+        <Button 
+          onClick={handlePostuler}
+          className="w-full"
+          disabled={concours.statut !== 'ouvert'}
+        >
+          {concours.statut === 'ouvert' ? 'Postuler' : 'Concours fermé'}
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

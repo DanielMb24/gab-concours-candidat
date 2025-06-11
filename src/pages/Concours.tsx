@@ -1,122 +1,81 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, GraduationCap } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
+import ConcoursCard from '@/components/ConcoursCard';
+import { apiService } from '@/services/api';
+import { Concours } from '@/types/entities';
 
-const Concours = () => {
-  const navigate = useNavigate();
+const ConcoursPage: React.FC = () => {
+  const { data: concoursResponse, isLoading, error } = useQuery({
+    queryKey: ['concours'],
+    queryFn: () => apiService.getConcours(),
+  });
 
-  // Données fictives pour le moment
-  const concours = [
-    {
-      id: '1',
-      nom: 'Concours d\'entrée à l\'École Nationale d\'Administration',
-      etablissement: 'École Nationale d\'Administration',
-      filiere: 'Administration Publique',
-      niveau: 'Bac+3',
-      date_fin_inscription: '2024-12-31',
-      date_epreuve: '2025-02-15',
-      frais_inscription: 50000,
-      statut: 'ouvert'
-    },
-    {
-      id: '2', 
-      nom: 'Concours de Professeurs des Écoles',
-      etablissement: 'Ministère de l\'Éducation Nationale',
-      filiere: 'Enseignement',
-      niveau: 'Bac+3',
-      date_fin_inscription: '2024-11-30',
-      date_epreuve: '2025-01-20',
-      frais_inscription: 35000,
-      statut: 'ouvert'
-    }
-  ];
+  console.log('Concours API Response:', concoursResponse);
 
-  const handlePostuler = (concoursId: string) => {
-    navigate(`/candidature/${concoursId}`);
-  };
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-8">Concours Disponibles</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-card rounded-lg p-6 shadow-md animate-pulse">
+                <div className="h-6 bg-muted rounded mb-4"></div>
+                <div className="h-4 bg-muted rounded mb-2"></div>
+                <div className="h-4 bg-muted rounded mb-4"></div>
+                <div className="h-10 bg-muted rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-8">Concours Disponibles</h1>
+          <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
+            Erreur lors du chargement des concours: {error.message}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const concours: Concours[] = concoursResponse?.data?.data || [];
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Concours Disponibles
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Découvrez tous les concours publics ouverts et postulez en quelques clics
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-4">Concours Disponibles</h1>
+          <p className="text-muted-foreground">
+            Découvrez tous les concours ouverts et postulez dès maintenant
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {concours.map((concours) => (
-            <Card key={concours.id} className="h-full hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-bold text-foreground leading-tight">
-                    {concours.nom}
-                  </CardTitle>
-                  <Badge variant="default" className="bg-green-500">
-                    Ouvert
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    <span>{concours.etablissement}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <GraduationCap className="h-4 w-4 text-primary" />
-                    <span>{concours.filiere} - {concours.niveau}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span>Inscription jusqu'au {formatDate(concours.date_fin_inscription)}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span>Épreuve: {formatDate(concours.date_epreuve)}</span>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t">
-                  <div className="flex items-center justify-between">
-                    <div className="text-lg font-semibold text-primary">
-                      {concours.frais_inscription.toLocaleString()} FCFA
-                    </div>
-                    <Button
-                      onClick={() => handlePostuler(concours.id)}
-                      className="bg-primary hover:bg-primary/90"
-                    >
-                      Postuler
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {concours.length === 0 ? (
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold mb-4">Aucun concours disponible</h2>
+            <p className="text-muted-foreground">
+              Il n'y a actuellement aucun concours ouvert. Revenez bientôt !
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {concours.map((concours) => (
+              <ConcoursCard key={concours.id} concours={concours} />
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );
 };
 
-export default Concours;
+export default ConcoursPage;
