@@ -23,13 +23,14 @@ app.use('/api/candidats', require('./routes/candidats'));
 app.use('/api/etudiants', require('./routes/etudiants'));
 app.use('/api/participations', require('./routes/participations'));
 app.use('/api/provinces', require('./routes/provinces'));
-app.use('/api/payements', require('./routes/paiements')); // Note: orthographe originale
+app.use('/api/payements', require('./routes/paiements'));
 app.use('/api/dossiers', require('./routes/dossiers'));
+app.use('/api/etablissements', require('./routes/etablissements'));
 
 // Routes d'administration
 app.use('/api', require('./routes/admin'));
 
-// Route de base
+// Route de base avec statistiques
 app.get('/api', (req, res) => {
   res.json({ 
     message: 'API GabConcours - Backend fonctionnel',
@@ -41,9 +42,40 @@ app.get('/api', (req, res) => {
       '/api/participations',
       '/api/provinces',
       '/api/payements',
-      '/api/dossiers'
+      '/api/dossiers',
+      '/api/etablissements'
     ]
   });
+});
+
+// Route pour les statistiques
+app.get('/api/statistics', async (req, res) => {
+  try {
+    const { getConnection } = require('./config/database');
+    const connection = getConnection();
+    
+    // Récupérer les statistiques
+    const [concoursCount] = await connection.execute('SELECT COUNT(*) as count FROM concours');
+    const [candidatsCount] = await connection.execute('SELECT COUNT(*) as count FROM candidats');
+    const [participationsCount] = await connection.execute('SELECT COUNT(*) as count FROM participations');
+    const [etablissementsCount] = await connection.execute('SELECT COUNT(*) as count FROM etablissements');
+    
+    res.json({
+      data: {
+        concours: concoursCount[0].count,
+        candidats: candidatsCount[0].count,
+        participations: participationsCount[0].count,
+        etablissements: etablissementsCount[0].count
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statistiques:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur', 
+      errors: [error.message] 
+    });
+  }
 });
 
 // Gestion des erreurs 404
@@ -71,19 +103,14 @@ const startServer = async () => {
     await createConnection();
     
     app.listen(PORT, () => {
-<<<<<<< HEAD
-      console.log(` Serveur démarré sur le port ${PORT}`);
-      console.log(` API accessible sur: http://localhost:${PORT}/api`);
-      console.log(`️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
-=======
       console.log(`🚀 Serveur démarré sur le port ${PORT}`);
       console.log(`📡 API accessible sur: http://localhost:${PORT}/api`);
       console.log(`🗄️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
       console.log(`👨‍💼 Interface admin: http://localhost:5173/admin`);
->>>>>>> f07320f132c9ef6174a5f7e35fff3e37ade2f168
+      console.log(`🔑 Login admin: admin@gabconcours.ga / admin123`);
     });
   } catch (error) {
-    console.error(' Erreur lors du démarrage du serveur:', error);
+    console.error('❌ Erreur lors du démarrage du serveur:', error);
     process.exit(1);
   }
 };

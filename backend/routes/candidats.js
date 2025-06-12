@@ -3,6 +3,33 @@ const express = require('express');
 const router = express.Router();
 const Candidat = require('../models/Candidat');
 
+// GET /api/candidats - Récupérer tous les candidats (pour l'admin)
+router.get('/', async (req, res) => {
+  try {
+    const { getConnection } = require('../config/database');
+    const connection = getConnection();
+    
+    const [rows] = await connection.execute(
+      `SELECT c.*, n.nomniv as niveau_nomniv,
+              COUNT(p.id) as participations_count
+       FROM candidats c 
+       LEFT JOIN niveaux n ON c.niveau_id = n.id
+       LEFT JOIN participations p ON c.id = p.candidat_id
+       GROUP BY c.id
+       ORDER BY c.created_at DESC`
+    );
+    
+    res.json({ data: rows });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des candidats:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur', 
+      errors: [error.message] 
+    });
+  }
+});
+
 // GET /api/candidats/:id - Récupérer un candidat par ID
 router.get('/:id', async (req, res) => {
   try {

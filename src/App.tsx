@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import Index from "./pages/Index";
 import Concours from "./pages/Concours";
 import Candidature from "./pages/Candidature";
@@ -15,10 +16,14 @@ import Connexion from "./pages/Connexion";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
+import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminConcours from "./pages/admin/Concours";
 import AdminCandidats from "./pages/admin/Candidats";
 import AdminEtablissements from "./pages/admin/Etablissements";
+import AdminDossiers from "./pages/admin/Dossiers";
+import AdminPaiements from "./pages/admin/Paiements";
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,32 +36,61 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/concours" element={<Concours />} />
-          <Route path="/candidature/:concoursId" element={<Candidature />} />
-          <Route path="/confirmation/:numeroCandidature" element={<Confirmation />} />
-          <Route path="/documents/:candidatureId" element={<Documents />} />
-          <Route path="/paiement/:candidatureId" element={<Paiement />} />
-          <Route path="/succes/:candidatureId" element={<Succes />} />
-          <Route path="/connexion" element={<Connexion />} />
-          
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/concours" element={<AdminConcours />} />
-          <Route path="/admin/candidats" element={<AdminCandidats />} />
-          <Route path="/admin/etablissements" element={<AdminEtablissements />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AdminAuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/concours" element={<Concours />} />
+            <Route path="/candidature/:concoursId" element={<Candidature />} />
+            <Route path="/confirmation/:numeroCandidature" element={<Confirmation />} />
+            <Route path="/documents/:candidatureId" element={<Documents />} />
+            <Route path="/paiement/:candidatureId" element={<Paiement />} />
+            <Route path="/succes/:candidatureId" element={<Succes />} />
+            <Route path="/connexion" element={<Connexion />} />
+            
+            {/* Admin routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            } />
+            <Route path="/admin/concours" element={
+              <AdminProtectedRoute>
+                <AdminConcours />
+              </AdminProtectedRoute>
+            } />
+            <Route path="/admin/candidats" element={
+              <AdminProtectedRoute>
+                <AdminCandidats />
+              </AdminProtectedRoute>
+            } />
+            <Route path="/admin/etablissements" element={
+              <AdminProtectedRoute>
+                <AdminEtablissements />
+              </AdminProtectedRoute>
+            } />
+            <Route path="/admin/dossiers" element={
+              <AdminProtectedRoute>
+                <AdminDossiers />
+              </AdminProtectedRoute>
+            } />
+            <Route path="/admin/paiements" element={
+              <AdminProtectedRoute>
+                <AdminPaiements />
+              </AdminProtectedRoute>
+            } />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AdminAuthProvider>
   </QueryClientProvider>
 );
 

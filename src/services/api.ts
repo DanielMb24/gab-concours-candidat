@@ -1,3 +1,4 @@
+
 import { 
   Concours, 
   ConcoursApiResponse,
@@ -15,7 +16,7 @@ import {
   Dossier
 } from '@/types/entities';
 
-// Utiliser le backend local au lieu de l'API externe
+// Utiliser le backend local
 const API_BASE_URL = 'http://localhost:3001/api';
 
 class ApiService {
@@ -26,7 +27,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer 123', // Token de développement
+        'Authorization': 'Bearer 123',
         ...options?.headers,
       },
       ...options,
@@ -74,7 +75,40 @@ class ApiService {
     });
   }
 
+  // Etablissement endpoints
+  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
+    return this.request('/etablissements');
+  }
+
+  async getEtablissementById(id: number): Promise<ApiResponse<Etablissement>> {
+    return this.request(`/etablissements/${id}`);
+  }
+
+  async createEtablissement(data: Partial<Etablissement>): Promise<ApiResponse<Etablissement>> {
+    return this.request('/etablissements', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateEtablissement(id: number, data: Partial<Etablissement>): Promise<ApiResponse<Etablissement>> {
+    return this.request(`/etablissements/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteEtablissement(id: number): Promise<ApiResponse<void>> {
+    return this.request(`/etablissements/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Candidat endpoints
+  async getAllCandidats(): Promise<ApiResponse<Candidat[]>> {
+    return this.request('/candidats');
+  }
+
   async createCandidat(data: {
     niveau_id: number;
     nipcan: string;
@@ -117,7 +151,7 @@ class ApiService {
       body: data,
       headers: {
         'Authorization': 'Bearer 123',
-      }, // Remove Content-Type for FormData
+      },
     });
   }
 
@@ -157,11 +191,10 @@ class ApiService {
     return this.request(`/participations/${participationId}/documents`);
   }
 
-  // Méthode d'upload de documents
   async uploadDocument(participationId: number, file: File, type: string): Promise<ApiResponse<Document>> {
     const formData = new FormData();
-    formData.append('concours_id', '1'); // À adapter
-    formData.append('nipcan', 'temp'); // À adapter avec les vraies données
+    formData.append('concours_id', '1');
+    formData.append('nipcan', 'temp');
     formData.append('documents', file);
     formData.append('type', type);
 
@@ -172,7 +205,6 @@ class ApiService {
         'Authorization': 'Bearer 123',
       },
     }).then(response => {
-      // Transformer la réponse pour correspondre au format attendu
       return {
         data: {
           id: Date.now(),
@@ -230,14 +262,13 @@ class ApiService {
     return this.request('/niveaux');
   }
 
-  // Etablissement endpoints
-  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
-    return this.request('/etablissements');
+  // Statistics endpoints
+  async getStatistics(): Promise<ApiResponse<any>> {
+    return this.request('/statistics');
   }
 
   // Authentication/Session simulation
   async createSession(participationId: number): Promise<{ sessionId: string; participationId: number }> {
-    // Simulation d'une session locale
     const sessionId = `session_${Date.now()}_${participationId}`;
     localStorage.setItem('gabconcours_session', JSON.stringify({
       sessionId,

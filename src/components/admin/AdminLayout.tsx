@@ -12,8 +12,10 @@ import {
   BarChart3,
   DollarSign,
   Calendar,
-  LogOut
+  LogOut,
+  UserCog
 } from 'lucide-react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 interface AdminLayoutProps {
   children?: React.ReactNode;
@@ -21,6 +23,7 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { user, logout } = useAdminAuth();
   
   const menuItems = [
     { icon: Home, label: 'Tableau de bord', path: '/admin' },
@@ -31,6 +34,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: DollarSign, label: 'Paiements', path: '/admin/paiements' },
     { icon: Calendar, label: 'Sessions', path: '/admin/sessions' },
     { icon: BarChart3, label: 'Rapports', path: '/admin/rapports' },
+    { icon: UserCog, label: 'Utilisateurs', path: '/admin/utilisateurs' },
     { icon: Settings, label: 'Paramètres', path: '/admin/parametres' },
   ];
 
@@ -44,12 +48,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
-      <div className="w-64 bg-card border-r border-border">
+      <div className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6">
           <h2 className="text-xl font-bold text-foreground">GabConcours Admin</h2>
+          <p className="text-sm text-muted-foreground mt-1">Panel d'administration</p>
         </div>
         
-        <nav className="px-4 space-y-2">
+        <nav className="px-4 space-y-2 flex-1">
           {menuItems.map((item) => (
             <Link
               key={item.path}
@@ -66,10 +71,29 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           ))}
         </nav>
 
-        <div className="absolute bottom-4 left-4 right-4">
-          <Button variant="ghost" className="w-full justify-start" asChild>
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-primary-foreground text-sm font-medium">
+                {user?.prenom?.charAt(0) || 'A'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {user?.prenom} {user?.nom}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.email}
+              </p>
+            </div>
+          </div>
+          <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Déconnexion
+          </Button>
+          <Button variant="ghost" className="w-full justify-start mt-2" asChild>
             <Link to="/">
-              <LogOut className="h-4 w-4 mr-2" />
+              <Home className="h-4 w-4 mr-2" />
               Retour au site
             </Link>
           </Button>
@@ -82,9 +106,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-semibold text-foreground">Administration</h1>
+              <p className="text-sm text-muted-foreground">
+                Gestion de la plateforme GabConcours
+              </p>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Administrateur</span>
+              <span className="text-sm text-muted-foreground">
+                Connecté en tant que <strong>{user?.role}</strong>
+              </span>
             </div>
           </div>
         </header>
