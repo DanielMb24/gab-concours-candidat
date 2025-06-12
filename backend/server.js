@@ -68,16 +68,16 @@ const startServer = async () => {
     await createConnection();
     
     app.listen(PORT, () => {
-      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-      console.log(`📡 API accessible sur: http://localhost:${PORT}/api`);
-      console.log(`🗄️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
+      console.log(` Serveur démarré sur le port ${PORT}`);
+      console.log(` API accessible sur: http://localhost:${PORT}/api`);
+      console.log(`️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
     });
   } catch (error) {
-    console.error('❌ Erreur lors du démarrage du serveur:', error);
+    console.error(' Erreur lors du démarrage du serveur:', error);
     process.exit(1);
   }
 };
 
-startServer();
+startServer().then(r => {});
 
 module.exports = app;
