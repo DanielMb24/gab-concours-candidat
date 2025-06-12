@@ -1,4 +1,3 @@
-
 // Types pour toutes les entités du système
 export interface AuthentifieSession {
   id: number;
@@ -157,7 +156,7 @@ export interface Participation {
   concours_id: number;
   stspar: number;
   numero_candidature?: string; // Pour les pages qui en ont besoin
-  statut?: 'inscrit' | 'paye' | 'valide' | 'en_attente'; // Pour les pages qui en ont besoin
+  statut?: 'inscrit' | 'paye' | 'valide' | 'en_attente'; // Types étendus pour couvrir tous les cas
   created_at: string;
   updated_at: string;
 }
