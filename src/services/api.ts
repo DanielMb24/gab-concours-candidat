@@ -1,4 +1,3 @@
-
 import { 
   Concours, 
   ConcoursApiResponse,
@@ -53,6 +52,26 @@ class ApiService {
 
   async getConcoursById(id: number): Promise<ApiResponse<Concours>> {
     return this.request(`/concours/${id}`);
+  }
+
+  async createConcours(data: Partial<Concours>): Promise<ApiResponse<Concours>> {
+    return this.request('/concours', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateConcours(id: number, data: Partial<Concours>): Promise<ApiResponse<Concours>> {
+    return this.request(`/concours/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteConcours(id: number): Promise<ApiResponse<void>> {
+    return this.request(`/concours/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Candidat endpoints

@@ -26,6 +26,9 @@ app.use('/api/provinces', require('./routes/provinces'));
 app.use('/api/payements', require('./routes/paiements')); // Note: orthographe originale
 app.use('/api/dossiers', require('./routes/dossiers'));
 
+// Routes d'administration
+app.use('/api', require('./routes/admin'));
+
 // Route de base
 app.get('/api', (req, res) => {
   res.json({ 
@@ -71,6 +74,7 @@ const startServer = async () => {
       console.log(`🚀 Serveur démarré sur le port ${PORT}`);
       console.log(`📡 API accessible sur: http://localhost:${PORT}/api`);
       console.log(`🗄️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
+      console.log(`👨‍💼 Interface admin: http://localhost:5173/admin`);
     });
   } catch (error) {
     console.error('❌ Erreur lors du démarrage du serveur:', error);
