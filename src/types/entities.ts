@@ -24,6 +24,7 @@ export interface Candidat {
   proact: number;
   proaff: number;
   ldncan: string;
+  participation?: Participation; // Add optional participation property
   created_at: string;
   updated_at: string;
 }

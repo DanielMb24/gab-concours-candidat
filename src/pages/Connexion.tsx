@@ -15,22 +15,10 @@ const Connexion = () => {
   const navigate = useNavigate();
   const [numeroCandidature, setNumeroCandidature] = useState('');
 
-  // Mutation pour rechercher une participation (simulation)
+  // Mutation pour rechercher une participation
   const searchMutation = useMutation({
     mutationFn: async (numero: string) => {
-      // Simulation d'une participation trouvée
-      return {
-        data: {
-          id: Number(numero.slice(-6)) || Date.now(),
-          candidat_id: 1,
-          concours_id: 1,
-          stspar: 1,
-          numero_candidature: numero,
-          statut: 'inscrit' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      };
+      return apiService.getParticipationByNumero(numero);
     },
     onSuccess: (response) => {
       const participation = response.data;
