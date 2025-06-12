@@ -44,15 +44,13 @@ const Connexion = () => {
       });
       
       // Rediriger selon le statut
-      switch (participation.statut) {
-        case 'inscrit':
-          navigate(`/documents/${participation.id}`);
-          break;
-        case 'paye':
-          navigate(`/succes/${participation.id}`);
-          break;
-        default:
-          navigate(`/confirmation/${participation.numero_candidature}`);
+      const statut = participation.statut;
+      if (statut === 'inscrit') {
+        navigate(`/documents/${participation.id}`);
+      } else if (statut === 'paye') {
+        navigate(`/succes/${participation.id}`);
+      } else {
+        navigate(`/confirmation/${participation.numero_candidature}`);
       }
     },
     onError: (error) => {
