@@ -111,8 +111,8 @@ const Candidature = () => {
       
       const candidatCreated = response.data;
       
-      // Créer une session locale
-      if (candidatCreated.participation) {
+      // Créer une session locale si participation existe
+      if (candidatCreated.participation?.id) {
         await apiService.createSession(candidatCreated.participation.id);
       }
       
