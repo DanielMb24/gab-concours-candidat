@@ -169,6 +169,10 @@ const Candidature = () => {
     createCandidatureMutation.mutate(candidat);
   };
 
+  function setPhoto(file: File) {
+    
+  }
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -331,12 +335,17 @@ const Candidature = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="phtcan">Photo (URL)</Label>
+                  <Label htmlFor="phtcan">Photo (fichier)</Label>
                   <Input
-                    id="phtcan"
-                    value={candidat.phtcan}
-                    onChange={(e) => handleInputChange('phtcan', e.target.value)}
-                    placeholder="URL de votre photo"
+                      id="phtcan"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          const file = e.target.files[0];
+                          setPhoto(file); // à définir dans ton state
+                        }
+                      }}
                   />
                 </div>
               </div>
