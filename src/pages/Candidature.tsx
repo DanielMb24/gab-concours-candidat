@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -10,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
-import { Candidat, Concours } from '@/types/entities';
 
 const Candidature = () => {
   const { concoursId } = useParams<{ concoursId: string }>();
@@ -106,27 +104,26 @@ const Candidature = () => {
       formData.append('ldncan', candidatData.ldncan);
       formData.append('concours_id', concoursId || '');
 
-      const etudiantResponse = await apiService.createEtudiant(formData);
-
-      console.log('Etudiant created:', etudiantResponse);
-
-      return {
-        candidat: etudiantResponse.data,
-        participation: { id: Date.now() } // Simulation car la participation est créée via /etudiants
-      };
+      return apiService.createEtudiant(formData);
     },
-    onSuccess: async (data) => {
-      console.log('Candidature created successfully:', data);
+    onSuccess: async (response) => {
+      console.log('Candidature created successfully:', response);
+      
+      const candidatCreated = response.data;
       
       // Créer une session locale
-      await apiService.createSession(data.participation.id);
+      if (candidatCreated.participation) {
+        await apiService.createSession(candidatCreated.participation.id);
+      }
       
       toast({
         title: "Candidature créée !",
         description: `Votre candidature a été enregistrée avec succès`,
       });
       
-      navigate(`/confirmation/${data.candidat.nupcan || data.candidat.id}`);
+      // Utiliser le nupcan ou l'id pour la redirection
+      const numeroRedirection = candidatCreated.nupcan || candidatCreated.id;
+      navigate(`/confirmation/${numeroRedirection}`);
     },
     onError: (error) => {
       console.error('Error creating candidature:', error);

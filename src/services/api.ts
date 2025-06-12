@@ -16,7 +16,8 @@ import {
   Dossier
 } from '@/types/entities';
 
-const API_BASE_URL = 'https://gabcnc.labodev.link/api';
+// Utiliser le backend local au lieu de l'API externe
+const API_BASE_URL = 'http://localhost:3001/api';
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -26,7 +27,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer 123',
+        'Authorization': 'Bearer 123', // Token de développement
         ...options?.headers,
       },
       ...options,
@@ -137,12 +138,13 @@ class ApiService {
     return this.request(`/participations/${participationId}/documents`);
   }
 
-  // Méthode d'upload de documents (simulation pour les pages)
+  // Méthode d'upload de documents
   async uploadDocument(participationId: number, file: File, type: string): Promise<ApiResponse<Document>> {
     const formData = new FormData();
     formData.append('concours_id', '1'); // À adapter
     formData.append('nipcan', 'temp'); // À adapter avec les vraies données
     formData.append('documents', file);
+    formData.append('type', type);
 
     return this.request('/dossiers', {
       method: 'POST',
@@ -173,7 +175,7 @@ class ApiService {
       body: data,
       headers: {
         'Authorization': 'Bearer 123',
-      }, // Remove Content-Type for FormData
+      },
     });
   }
 
