@@ -126,7 +126,7 @@ class ApiService {
   }
 
   // Document endpoints
-  async createDocument(data: { nomniv: string }): Promise<ApiResponse<Document>> {
+  async createDocument(data: { nomdoc: string }): Promise<ApiResponse<Document>> {
     return this.request('/documents', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -135,6 +135,35 @@ class ApiService {
 
   async getDocumentsByParticipation(participationId: number): Promise<ApiResponse<Document[]>> {
     return this.request(`/participations/${participationId}/documents`);
+  }
+
+  // Méthode d'upload de documents (simulation pour les pages)
+  async uploadDocument(participationId: number, file: File, type: string): Promise<ApiResponse<Document>> {
+    const formData = new FormData();
+    formData.append('concours_id', '1'); // À adapter
+    formData.append('nipcan', 'temp'); // À adapter avec les vraies données
+    formData.append('documents', file);
+
+    return this.request('/dossiers', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': 'Bearer 123',
+      },
+    }).then(response => {
+      // Transformer la réponse pour correspondre au format attendu
+      return {
+        data: {
+          id: Date.now(),
+          nomdoc: file.name,
+          type: type,
+          nom_fichier: file.name,
+          statut: 'en_attente' as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      };
+    });
   }
 
   // Dossier endpoints

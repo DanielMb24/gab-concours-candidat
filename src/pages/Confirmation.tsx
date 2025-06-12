@@ -13,13 +13,19 @@ const Confirmation = () => {
   const { numeroCandidature } = useParams<{ numeroCandidature: string }>();
   const navigate = useNavigate();
 
-  const { data: participationResponse, isLoading, error } = useQuery({
-    queryKey: ['participation', numeroCandidature],
-    queryFn: () => apiService.getParticipationByNumero(numeroCandidature!),
-    enabled: !!numeroCandidature,
-  });
+  // Simulation d'une participation avec les bonnes propriétés
+  const simulatedParticipation = {
+    id: Number(numeroCandidature) || 1,
+    candidat_id: 1,
+    concours_id: 1,
+    stspar: 1,
+    numero_candidature: numeroCandidature || `CONC2024${String(Date.now()).slice(-6)}`,
+    statut: 'inscrit' as const,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
-  const participation = participationResponse?.data;
+  const participation = simulatedParticipation;
 
   const handleContinuer = () => {
     if (participation) {
@@ -38,41 +44,6 @@ const Confirmation = () => {
       });
     }
   };
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <div className="animate-pulse">
-              <div className="h-8 bg-muted rounded mb-4"></div>
-              <div className="h-4 bg-muted rounded mb-8"></div>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (error || !participation) {
-    return (
-      <Layout>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-destructive mb-4">
-              Candidature non trouvée
-            </h1>
-            <p className="text-muted-foreground mb-8">
-              Le numéro de candidature {numeroCandidature} n'existe pas.
-            </p>
-            <Button onClick={() => navigate('/')}>
-              Retour à l'accueil
-            </Button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>

@@ -70,6 +70,9 @@ export interface Concours {
 export interface Document {
   id: number;
   nomdoc: string;
+  type?: string; // Type de document pour les pages
+  nom_fichier?: string; // Nom du fichier pour les pages
+  statut?: 'en_attente' | 'valide' | 'rejete'; // Statut pour les pages
   created_at: string;
   updated_at: string;
 }
@@ -153,6 +156,8 @@ export interface Participation {
   candidat_id: number;
   concours_id: number;
   stspar: number;
+  numero_candidature?: string; // Pour les pages qui en ont besoin
+  statut?: 'inscrit' | 'paye' | 'valide' | 'en_attente'; // Pour les pages qui en ont besoin
   created_at: string;
   updated_at: string;
 }
@@ -162,6 +167,9 @@ export interface Paiement {
   candidat_id: number;
   mntfrai: string;
   datfrai: string;
+  montant?: number; // Pour les pages qui en ont besoin
+  reference?: string; // Pour les pages qui en ont besoin
+  statut?: 'en_attente' | 'valide' | 'rejete'; // Pour les pages qui en ont besoin
   created_at: string;
   updated_at: string;
 }

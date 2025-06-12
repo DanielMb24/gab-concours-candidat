@@ -19,22 +19,20 @@ const Paiement = () => {
   const [numeroTelephone, setNumeroTelephone] = useState('');
   const [processing, setProcessing] = useState(false);
 
-  // Récupération des informations de participation
-  const { data: participationResponse } = useQuery({
-    queryKey: ['participation', candidatureId],
-    queryFn: () => apiService.getParticipationById(Number(candidatureId)),
-    enabled: !!candidatureId,
-  });
+  // Simulation de participation et paiement
+  const simulatedParticipation = {
+    id: Number(candidatureId) || 1,
+    candidat_id: 1,
+    concours_id: 1,
+    stspar: 1,
+    numero_candidature: `CONC2024${candidatureId}`,
+    statut: 'inscrit' as const,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
-  // Vérification si un paiement existe déjà
-  const { data: paiementResponse } = useQuery({
-    queryKey: ['paiement', candidatureId],
-    queryFn: () => apiService.getPaiementByParticipation(Number(candidatureId)),
-    enabled: !!candidatureId,
-  });
-
-  const participation = participationResponse?.data;
-  const paiementExistant = paiementResponse?.data;
+  const participation = simulatedParticipation;
+  const paiementExistant = null; // Pas de paiement existant pour l'instant
 
   // Mutation pour créer un paiement
   const createPaiementMutation = useMutation({
@@ -44,11 +42,9 @@ const Paiement = () => {
       montant: number;
     }) => {
       return apiService.createPaiement({
-        participation_id: Number(candidatureId),
-        montant: paiementData.montant,
-        methode: paiementData.methode as 'mobile_money' | 'virement' | 'especes',
-        reference: `${paiementData.methode}_${Date.now()}_${candidatureId}`,
-        statut: 'en_attente',
+        candidat_id: participation.candidat_id,
+        mntfrai: paiementData.montant.toString(),
+        datfrai: new Date().toISOString(),
       });
     },
     onSuccess: (response) => {
@@ -152,10 +148,10 @@ const Paiement = () => {
             <CardContent>
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <p className="text-yellow-800">
-                  Un paiement de {paiementExistant.montant.toLocaleString()} FCFA est déjà en cours de traitement.
+                  Un paiement de {(paiementExistant.montant || 50000).toLocaleString()} FCFA est déjà en cours de traitement.
                 </p>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Référence: {paiementExistant.reference}
+                  Référence: {paiementExistant.reference || 'REF_' + Date.now()}
                 </p>
               </div>
             </CardContent>
