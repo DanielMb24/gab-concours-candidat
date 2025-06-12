@@ -14,6 +14,12 @@ import Succes from "./pages/Succes";
 import Connexion from "./pages/Connexion";
 import NotFound from "./pages/NotFound";
 
+// Admin pages
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminConcours from "./pages/admin/Concours";
+import AdminCandidats from "./pages/admin/Candidats";
+import AdminEtablissements from "./pages/admin/Etablissements";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -30,6 +36,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<Index />} />
           <Route path="/concours" element={<Concours />} />
           <Route path="/candidature/:concoursId" element={<Candidature />} />
@@ -38,6 +45,13 @@ const App = () => (
           <Route path="/paiement/:candidatureId" element={<Paiement />} />
           <Route path="/succes/:candidatureId" element={<Succes />} />
           <Route path="/connexion" element={<Connexion />} />
+          
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/concours" element={<AdminConcours />} />
+          <Route path="/admin/candidats" element={<AdminCandidats />} />
+          <Route path="/admin/etablissements" element={<AdminEtablissements />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
