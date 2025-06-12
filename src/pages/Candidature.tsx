@@ -17,16 +17,18 @@ const Candidature = () => {
   const navigate = useNavigate();
   
   const [candidat, setCandidatForm] = useState({
-    nom: '',
-    prenom: '',
-    date_naissance: '',
-    lieu_naissance: '',
-    sexe: 'M' as 'M' | 'F',
-    telephone: '',
-    email: '',
-    adresse: '',
-    province_id: '',
-    nip: ''
+    nomcan: '',
+    prncan: '',
+    dtncan: '',
+    ldncan: '',
+    telcan: '',
+    maican: '',
+    proorg: '',
+    proact: '',
+    proaff: '',
+    nipcan: '',
+    niveau_id: '',
+    phtcan: ''
   });
 
   const [searchingNip, setSearchingNip] = useState(false);
@@ -53,15 +55,17 @@ const Candidature = () => {
       const candidatData = response.data;
       setCandidatForm(prev => ({
         ...prev,
-        nom: candidatData.nom,
-        prenom: candidatData.prenom,
-        date_naissance: candidatData.date_naissance.split(' ')[0], // Format date
-        lieu_naissance: candidatData.lieu_naissance,
-        sexe: candidatData.sexe,
-        telephone: candidatData.telephone,
-        email: candidatData.email,
-        adresse: candidatData.adresse,
-        province_id: candidatData.province_id.toString(),
+        nomcan: candidatData.nomcan,
+        prncan: candidatData.prncan,
+        dtncan: candidatData.dtncan.split(' ')[0], // Format date
+        ldncan: candidatData.ldncan,
+        telcan: candidatData.telcan,
+        maican: candidatData.maican,
+        proorg: candidatData.proorg.toString(),
+        proact: candidatData.proact.toString(),
+        proaff: candidatData.proaff.toString(),
+        niveau_id: candidatData.niveau_id.toString(),
+        phtcan: candidatData.phtcan || '',
       }));
       toast({
         title: "Informations trouvées",
@@ -80,38 +84,35 @@ const Candidature = () => {
     }
   });
 
-  // Création de candidature
+  // Création de candidature avec étudiant endpoint
   const createCandidatureMutation = useMutation({
     mutationFn: async (candidatData: typeof candidat) => {
-      console.log('Creating candidat with data:', candidatData);
+      console.log('Creating candidature with data:', candidatData);
       
-      // Créer ou récupérer le candidat
-      const candidatResponse = await apiService.createCandidat({
-        nom: candidatData.nom,
-        prenom: candidatData.prenom,
-        email: candidatData.email,
-        telephone: candidatData.telephone,
-        date_naissance: candidatData.date_naissance,
-        lieu_naissance: candidatData.lieu_naissance,
-        sexe: candidatData.sexe,
-        adresse: candidatData.adresse,
-        province_id: Number(candidatData.province_id),
-      });
+      // Préparer les données pour l'endpoint /etudiants
+      const formData = new FormData();
+      formData.append('niveau_id', concours?.niveau_id || '');
+      formData.append('filiere_id', '1'); // À adapter selon vos besoins
+      formData.append('nipcan', candidatData.nipcan);
+      formData.append('nomcan', candidatData.nomcan);
+      formData.append('prncan', candidatData.prncan);
+      formData.append('maican', candidatData.maican);
+      formData.append('dtncan', candidatData.dtncan);
+      formData.append('telcan', candidatData.telcan);
+      formData.append('phtcan', candidatData.phtcan);
+      formData.append('proorg', candidatData.proorg);
+      formData.append('proact', candidatData.proact);
+      formData.append('proaff', candidatData.proaff);
+      formData.append('ldncan', candidatData.ldncan);
+      formData.append('concours_id', concoursId || '');
 
-      console.log('Candidat created:', candidatResponse);
+      const etudiantResponse = await apiService.createEtudiant(formData);
 
-      // Créer la participation
-      const participationResponse = await apiService.createParticipation({
-        candidat_id: candidatResponse.data.id,
-        concours_id: Number(concoursId),
-        statut: 'inscrit',
-      });
-
-      console.log('Participation created:', participationResponse);
+      console.log('Etudiant created:', etudiantResponse);
 
       return {
-        candidat: candidatResponse.data,
-        participation: participationResponse.data
+        candidat: etudiantResponse.data,
+        participation: { id: Date.now() } // Simulation car la participation est créée via /etudiants
       };
     },
     onSuccess: async (data) => {
@@ -122,10 +123,10 @@ const Candidature = () => {
       
       toast({
         title: "Candidature créée !",
-        description: `Votre candidature a été enregistrée avec le numéro ${data.participation.numero_candidature}`,
+        description: `Votre candidature a été enregistrée avec succès`,
       });
       
-      navigate(`/confirmation/${data.participation.numero_candidature}`);
+      navigate(`/confirmation/${data.candidat.nupcan || data.candidat.id}`);
     },
     onError: (error) => {
       console.error('Error creating candidature:', error);
@@ -145,9 +146,9 @@ const Candidature = () => {
   };
 
   const handleNipSearch = () => {
-    if (candidat.nip.trim()) {
+    if (candidat.nipcan.trim()) {
       setSearchingNip(true);
-      nipSearchMutation.mutate(candidat.nip);
+      nipSearchMutation.mutate(candidat.nipcan);
     }
   };
 
@@ -155,8 +156,8 @@ const Candidature = () => {
     e.preventDefault();
     
     // Validation basique
-    if (!candidat.nom || !candidat.prenom || !candidat.email || !candidat.telephone || 
-        !candidat.date_naissance || !candidat.province_id) {
+    if (!candidat.nomcan || !candidat.prncan || !candidat.maican || !candidat.telcan || 
+        !candidat.dtncan || !candidat.proorg) {
       toast({
         title: "Champs requis",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -189,7 +190,7 @@ const Candidature = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="p-4 bg-muted rounded-lg">
-                <Label htmlFor="nip" className="text-sm font-medium">
+                <Label htmlFor="nipcan" className="text-sm font-medium">
                   NIP (Numéro d'Identification Personnel)
                 </Label>
                 <p className="text-xs text-muted-foreground mb-3">
@@ -197,16 +198,16 @@ const Candidature = () => {
                 </p>
                 <div className="flex gap-2">
                   <Input
-                    id="nip"
+                    id="nipcan"
                     placeholder="Ex: 1234567890123"
-                    value={candidat.nip}
-                    onChange={(e) => handleInputChange('nip', e.target.value)}
+                    value={candidat.nipcan}
+                    onChange={(e) => handleInputChange('nipcan', e.target.value)}
                   />
                   <Button 
                     type="button" 
                     variant="outline"
                     onClick={handleNipSearch}
-                    disabled={searchingNip || !candidat.nip.trim()}
+                    disabled={searchingNip || !candidat.nipcan.trim()}
                   >
                     {searchingNip ? 'Recherche...' : 'Rechercher'}
                   </Button>
@@ -215,109 +216,127 @@ const Candidature = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="prenom">Prénom *</Label>
+                  <Label htmlFor="prncan">Prénom *</Label>
                   <Input
-                    id="prenom"
-                    value={candidat.prenom}
-                    onChange={(e) => handleInputChange('prenom', e.target.value)}
+                    id="prncan"
+                    value={candidat.prncan}
+                    onChange={(e) => handleInputChange('prncan', e.target.value)}
                     placeholder="Votre prénom"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="nom">Nom *</Label>
+                  <Label htmlFor="nomcan">Nom *</Label>
                   <Input
-                    id="nom"
-                    value={candidat.nom}
-                    onChange={(e) => handleInputChange('nom', e.target.value)}
+                    id="nomcan"
+                    value={candidat.nomcan}
+                    onChange={(e) => handleInputChange('nomcan', e.target.value)}
                     placeholder="Votre nom"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="date_naissance">Date de naissance *</Label>
+                  <Label htmlFor="dtncan">Date de naissance *</Label>
                   <Input
-                    id="date_naissance"
+                    id="dtncan"
                     type="date"
-                    value={candidat.date_naissance}
-                    onChange={(e) => handleInputChange('date_naissance', e.target.value)}
+                    value={candidat.dtncan}
+                    onChange={(e) => handleInputChange('dtncan', e.target.value)}
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="lieu_naissance">Lieu de naissance *</Label>
+                  <Label htmlFor="ldncan">Lieu de naissance *</Label>
                   <Input
-                    id="lieu_naissance"
-                    value={candidat.lieu_naissance}
-                    onChange={(e) => handleInputChange('lieu_naissance', e.target.value)}
+                    id="ldncan"
+                    value={candidat.ldncan}
+                    onChange={(e) => handleInputChange('ldncan', e.target.value)}
                     placeholder="Votre lieu de naissance"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="sexe">Sexe *</Label>
-                  <Select value={candidat.sexe} onValueChange={(value: 'M' | 'F') => handleInputChange('sexe', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choisir votre sexe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">Masculin</SelectItem>
-                      <SelectItem value="F">Féminin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="telephone">Téléphone *</Label>
+                  <Label htmlFor="telcan">Téléphone *</Label>
                   <Input
-                    id="telephone"
-                    value={candidat.telephone}
-                    onChange={(e) => handleInputChange('telephone', e.target.value)}
+                    id="telcan"
+                    value={candidat.telcan}
+                    onChange={(e) => handleInputChange('telcan', e.target.value)}
                     placeholder="+241 XX XX XX XX"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="maican">Email *</Label>
                   <Input
-                    id="email"
+                    id="maican"
                     type="email"
-                    value={candidat.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    value={candidat.maican}
+                    onChange={(e) => handleInputChange('maican', e.target.value)}
                     placeholder="votre@email.com"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="province">Province *</Label>
-                  <Select value={candidat.province_id} onValueChange={(value) => handleInputChange('province_id', value)}>
+                  <Label htmlFor="proorg">Province d'origine *</Label>
+                  <Select value={candidat.proorg} onValueChange={(value) => handleInputChange('proorg', value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choisir votre province" />
+                      <SelectValue placeholder="Choisir votre province d'origine" />
                     </SelectTrigger>
                     <SelectContent>
                       {provinces.map(province => (
                         <SelectItem key={province.id} value={province.id.toString()}>
-                          {province.nom}
+                          {province.nompro}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="md:col-span-2">
-                  <Label htmlFor="adresse">Adresse *</Label>
+                <div>
+                  <Label htmlFor="proact">Province actuelle</Label>
+                  <Select value={candidat.proact} onValueChange={(value) => handleInputChange('proact', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province actuelle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                        <SelectItem key={province.id} value={province.id.toString()}>
+                          {province.nompro}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="proaff">Province d'affectation souhaitée</Label>
+                  <Select value={candidat.proaff} onValueChange={(value) => handleInputChange('proaff', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province d'affectation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                        <SelectItem key={province.id} value={province.id.toString()}>
+                          {province.nompro}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="phtcan">Photo (URL)</Label>
                   <Input
-                    id="adresse"
-                    value={candidat.adresse}
-                    onChange={(e) => handleInputChange('adresse', e.target.value)}
-                    placeholder="Votre adresse complète"
-                    required
+                    id="phtcan"
+                    value={candidat.phtcan}
+                    onChange={(e) => handleInputChange('phtcan', e.target.value)}
+                    placeholder="URL de votre photo"
                   />
                 </div>
               </div>

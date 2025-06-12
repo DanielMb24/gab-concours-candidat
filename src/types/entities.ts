@@ -11,15 +11,20 @@ export interface AuthentifieSession {
 
 export interface Candidat {
   id: number;
-  nom: string;
-  prenom: string;
-  email: string;
-  telephone: string;
-  date_naissance: string;
-  lieu_naissance: string;
-  sexe: 'M' | 'F';
-  adresse: string;
-  province_id: number;
+  niveau_id: number;
+  niveau_nomniv?: string;
+  nipcan: string;
+  nomcan: string;
+  prncan: string;
+  maican: string;
+  dtncan: string;
+  nupcan?: string;
+  telcan: string;
+  phtcan?: string;
+  proorg: number;
+  proact: number;
+  proaff: number;
+  ldncan: string;
   created_at: string;
   updated_at: string;
 }
@@ -64,21 +69,17 @@ export interface Concours {
 
 export interface Document {
   id: number;
-  candidat_id: number;
-  type: string;
-  nom_fichier: string;
-  url: string;
-  statut: 'en_attente' | 'valide' | 'rejete';
+  nomdoc: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface Dossier {
   id: number;
-  candidat_id: number;
-  concours_id: number;
-  numero_dossier: string;
-  statut: 'en_cours' | 'complet' | 'valide' | 'rejete';
+  concour_id: string;
+  docdsr: string;
+  document_id: number;
+  nipcan: string;
   created_at: string;
   updated_at: string;
 }
@@ -151,19 +152,16 @@ export interface Participation {
   id: number;
   candidat_id: number;
   concours_id: number;
-  numero_candidature: string;
-  statut: 'inscrit' | 'paye' | 'compose' | 'admis' | 'refuse';
+  stspar: number;
   created_at: string;
   updated_at: string;
 }
 
 export interface Paiement {
   id: number;
-  participation_id: number;
-  montant: number;
-  methode: 'mobile_money' | 'virement' | 'especes';
-  reference: string;
-  statut: 'en_attente' | 'valide' | 'echoue';
+  candidat_id: number;
+  mntfrai: string;
+  datfrai: string;
   created_at: string;
   updated_at: string;
 }
@@ -179,10 +177,10 @@ export interface Photo {
 
 export interface Province {
   id: number;
-  nom: string;
-  code: string;
-  created_at: string;
-  updated_at: string;
+  nompro: string;
+  cdepro: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Jeton {
@@ -209,7 +207,7 @@ export interface Utilisateur {
 
 // Types pour les réponses API
 export interface ApiResponse<T> {
-  success: boolean;
+  success?: boolean;
   data: T;
   message?: string;
   errors?: string[];

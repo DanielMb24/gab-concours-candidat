@@ -12,7 +12,8 @@ import {
   Province,
   Matiere,
   ApiResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  Dossier
 } from '@/types/entities';
 
 const API_BASE_URL = 'https://gabcnc.labodev.link/api';
@@ -25,6 +26,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Authorization': 'Bearer 123',
         ...options?.headers,
       },
       ...options,
@@ -53,7 +55,20 @@ class ApiService {
   }
 
   // Candidat endpoints
-  async createCandidat(data: Partial<Candidat>): Promise<ApiResponse<Candidat>> {
+  async createCandidat(data: {
+    niveau_id: number;
+    nipcan: string;
+    nomcan: string;
+    prncan: string;
+    maican: string;
+    dtncan: string;
+    telcan: string;
+    phtcan?: string;
+    proorg: number;
+    proact: number;
+    proaff: number;
+    ldncan: string;
+  }): Promise<ApiResponse<Candidat>> {
     return this.request('/candidats', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -75,8 +90,23 @@ class ApiService {
     });
   }
 
+  // Etudiant endpoints (pour l'inscription complète)
+  async createEtudiant(data: FormData): Promise<ApiResponse<Candidat>> {
+    return this.request('/etudiants', {
+      method: 'POST',
+      body: data,
+      headers: {
+        'Authorization': 'Bearer 123',
+      }, // Remove Content-Type for FormData
+    });
+  }
+
   // Participation endpoints
-  async createParticipation(data: Partial<Participation>): Promise<ApiResponse<Participation>> {
+  async createParticipation(data: {
+    concours_id: number;
+    candidat_id: number;
+    stspar: number;
+  }): Promise<ApiResponse<Participation>> {
     return this.request('/participations', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -96,16 +126,10 @@ class ApiService {
   }
 
   // Document endpoints
-  async uploadDocument(participationId: number, file: File, type: string): Promise<ApiResponse<Document>> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('participation_id', participationId.toString());
-    formData.append('type', type);
-
+  async createDocument(data: { nomniv: string }): Promise<ApiResponse<Document>> {
     return this.request('/documents', {
       method: 'POST',
-      body: formData,
-      headers: {}, // Remove Content-Type for FormData
+      body: JSON.stringify(data),
     });
   }
 
@@ -113,9 +137,24 @@ class ApiService {
     return this.request(`/participations/${participationId}/documents`);
   }
 
+  // Dossier endpoints
+  async createDossier(data: FormData): Promise<ApiResponse<Dossier[]>> {
+    return this.request('/dossiers', {
+      method: 'POST',
+      body: data,
+      headers: {
+        'Authorization': 'Bearer 123',
+      }, // Remove Content-Type for FormData
+    });
+  }
+
   // Paiement endpoints
-  async createPaiement(data: Partial<Paiement>): Promise<ApiResponse<Paiement>> {
-    return this.request('/paiements', {
+  async createPaiement(data: {
+    candidat_id: number;
+    mntfrai: string;
+    datfrai: string;
+  }): Promise<ApiResponse<Paiement>> {
+    return this.request('/payements', {
       method: 'POST',
       body: JSON.stringify(data),
     });
