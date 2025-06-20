@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -37,45 +36,45 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AdminAuthProvider>
-        <Router>
-          <Routes>
-            {/* Routes publiques */}
-            <Route path="/" element={<Index />} />
-            <Route path="/concours" element={<Concours />} />
-            <Route path="/candidature/:concoursId" element={<Candidature />} />
-            <Route path="/confirmation/:numeroCandidature" element={<Confirmation />} />
-            <Route path="/documents/:candidatureId" element={<Documents />} />
-            <Route path="/paiement/:candidatureId" element={<Paiement />} />
-            <Route path="/succes/:candidatureId" element={<Succes />} />
-            <Route path="/connexion" element={<Connexion />} />
+      <QueryClientProvider client={queryClient}>
+        <AdminAuthProvider>
+          <Router>
+            <Routes>
+              {/* Routes publiques */}
+              <Route path="/" element={<Index />} />
+              <Route path="/concours" element={<Concours />} />
+              <Route path="/candidature/:concoursId" element={<Candidature />} />
+              <Route path="/confirmation/:numeroCandidature" element={<Confirmation />} />
+              <Route path="/documents/:candidatureId" element={<Documents />} />
+              <Route path="/paiement/:candidatureId" element={<Paiement />} />
+              <Route path="/succes/:candidatureId" element={<Succes />} />
+              <Route path="/connexion" element={<Connexion />} />
 
-            {/* Routes admin */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <AdminProtectedRoute>
-                  <AdminLayout />
-                </AdminProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="concours" element={<AdminConcours />} />
-              <Route path="candidats" element={<AdminCandidats />} />
-              <Route path="etablissements" element={<AdminEtablissements />} />
-              <Route path="dossiers" element={<AdminDossiers />} />
-              <Route path="paiements" element={<AdminPaiements />} />
-            </Route>
+              {/* Routes admin */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route
+                  path="/admin"
+                  element={
+                    <AdminProtectedRoute>
+                      <AdminLayout />
+                    </AdminProtectedRoute>
+                  }
+              >
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="concours" element={<AdminConcours />} />
+                <Route path="candidats" element={<AdminCandidats />} />
+                <Route path="etablissements" element={<AdminEtablissements />} />
+                <Route path="dossiers" element={<AdminDossiers />} />
+                <Route path="paiements" element={<AdminPaiements />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </Router>
-      </AdminAuthProvider>
-    </QueryClientProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </AdminAuthProvider>
+      </QueryClientProvider>
   );
 }
 

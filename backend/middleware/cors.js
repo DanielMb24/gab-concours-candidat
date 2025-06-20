@@ -9,8 +9,8 @@ const corsOptions = {
     'http://localhost:8083',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3002',
-    'http://localhost:8093',
-    'http://127.0.0.1:8093'
+    'http://localhost:8096',
+    'http://127.0.0.1:8096'
 
   ],
   credentials: true,

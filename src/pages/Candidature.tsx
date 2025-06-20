@@ -89,7 +89,7 @@ const Candidature = () => {
         throw new Error('Niveau du concours non trouvé');
       }
 
-      // Préparer les données pour l'endpoint /etudiants
+      // Préparer les données pour l'endpoint
       const formData = new FormData();
       formData.append('niveau_id', concours.niveau_id.toString());
 
@@ -109,41 +109,34 @@ const Candidature = () => {
       formData.append('proact', candidatData.proact || candidatData.proorg);
       formData.append('proaff', candidatData.proaff || candidatData.proorg);
       formData.append('concours_id', concoursId || '');
-
-
       console.log('FormData entries:');
       for (const [key, value] of formData.entries()) {
         console.log(`${key}: ${value}`);
       }
 
-      return apiService.createCandidat(formData);
+      return apiService.createEtudiant(formData);
     },
     onSuccess: async (response) => {
       console.log('Candidature created successfully:', response);
-
       const candidatCreated = response.data;
-
-      // Créer une session locale avec le nupcan généré
       if (candidatCreated.nupcan) {
         await apiService.createSession(candidatCreated.nupcan);
       }
-
       toast({
-        title: "Candidature créée !",
+        title: "Candidature a bien commencé !",
         description: `Votre candidature a été enregistrée avec succès. Numéro: ${candidatCreated.nupcan}`,
       });
-
-      // Rediriger vers la page de confirmation avec le nupcan
-      navigate(`/confirmation/${candidatCreated.nupcan}`);
+      console.log('Redirecting to:', `/confirmation/${encodeURIComponent(candidatCreated.nupcan)}`);
+      navigate(`/confirmation/${encodeURIComponent(candidatCreated.nupcan)}`);
     },
     onError: (error) => {
       console.error('Error creating candidature:', error);
       let errorMessage = "Une erreur est survenue lors de la création de votre candidature";
-      
+
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       toast({
         title: "Erreur",
         description: errorMessage,
@@ -253,125 +246,126 @@ const Candidature = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="nomcan">Nom *</Label>
-                    <Input
-                        id="nomcan"
-                        value={candidat.nomcan}
-                        onChange={(e) => handleInputChange('nomcan', e.target.value)}
-                        placeholder="Votre nom"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dtncan">Date de naissance *</Label>
-                    <Input
-                        id="dtncan"
-                        type="date"
-                        value={candidat.dtncan}
-                        onChange={(e) => handleInputChange('dtncan', e.target.value)}
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="ldncan">Lieu de naissance *</Label>
-                    <Input
-                        id="ldncan"
-                        value={candidat.ldncan}
-                        onChange={(e) => handleInputChange('ldncan', e.target.value)}
-                        placeholder="Votre lieu de naissance"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="telcan">Téléphone *</Label>
-                    <Input
-                        id="telcan"
-                        value={candidat.telcan}
-                        onChange={(e) => handleInputChange('telcan', e.target.value)}
-                        placeholder="+241 XX XX XX XX"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="maican">Email *</Label>
-                    <Input
-                        id="maican"
-                        type="email"
-                        value={candidat.maican}
-                        onChange={(e) => handleInputChange('maican', e.target.value)}
-                        placeholder="votre@email.com"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="proorg">Province d'origine *</Label>
-                    <Select value={candidat.proorg} onValueChange={(value) => handleInputChange('proorg', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir votre province d'origine" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map(province => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.nompro}
-                            </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="proact">Province actuelle</Label>
-                    <Select value={candidat.proact} onValueChange={(value) => handleInputChange('proact', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir votre province actuelle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map(province => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.nompro}
-                            </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <Label htmlFor="proaff">Province d'affectation souhaitée</Label>
-                    <Select value={candidat.proaff} onValueChange={(value) => handleInputChange('proaff', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir votre province d'affectation" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map(province => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.nompro}
-                            </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <Label htmlFor="nomcan">Nom *
+                  </Label>
+                  <Input
+                      id="nomcan"
+                      value={candidat.nomcan}
+                      onChange={(e) => handleInputChange('nomcan', e.target.value)}
+                      placeholder="Votre nom"
+                      required
+                  />
                 </div>
 
-                <div className="flex justify-end">
-                  <Button
-                      type="submit"
-                      disabled={createCandidatureMutation.isPending}
-                      className="bg-primary hover:bg-primary/90"
-                  >
-                    {createCandidatureMutation.isPending ? 'Création...' : 'Créer ma candidature'}
-                  </Button>
+                <div>
+                  <Label htmlFor="dtncan">Date de naissance *</Label>
+                  <Input
+                      id="dtncan"
+                      type="date"
+                      value={candidat.dtncan}
+                      onChange={(e) => handleInputChange('dtncan', e.target.value)}
+                      required
+                  />
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+
+                <div>
+                  <Label htmlFor="ldncan">Lieu de naissance *</Label>
+                  <Input
+                      id="ldncan"
+                      value={candidat.ldncan}
+                      onChange={(e) => handleInputChange('ldncan', e.target.value)}
+                      placeholder="Votre lieu de naissance"
+                      required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="telcan">Téléphone *</Label>
+                  <Input
+                      id="telcan"
+                      value={candidat.telcan}
+                      onChange={(e) => handleInputChange('telcan', e.target.value)}
+                      placeholder="+241 XX XX XX XX"
+                      required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="maican">Email *</Label>
+                  <Input
+                      id="maican"
+                      type="email"
+                      value={candidat.maican}
+                      onChange={(e) => handleInputChange('maican', e.target.value)}
+                      placeholder="votre@email.com"
+                      required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="proorg">Province d'origine *</Label>
+                  <Select value={candidat.proorg} onValueChange={(value) => handleInputChange('proorg', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province d'origine" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.nompro}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="proact">Province actuelle</Label>
+                  <Select value={candidat.proact} onValueChange={(value) => handleInputChange('proact', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province actuelle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.nompro}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="proaff">Province d'affectation souhaitée</Label>
+                  <Select value={candidat.proaff} onValueChange={(value) => handleInputChange('proaff', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province d'affectation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.nompro}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
         </div>
-      </Layout>
-  );
+
+        <div className="flex justify-end">
+          <Button
+              type="submit"
+              disabled={createCandidatureMutation.isPending}
+              className="bg-primary hover:bg-primary/90"
+          >
+            {createCandidatureMutation.isPending ? 'Création...' : 'Créer ma candidature'}
+          </Button>
+        </div>
+      </form>
+</CardContent>
+</Card>
+</div>
+</Layout>
+);
 };
 
 export default Candidature;
