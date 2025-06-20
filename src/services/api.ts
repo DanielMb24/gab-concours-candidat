@@ -1,4 +1,3 @@
-
 import { 
   Concours, 
   ConcoursApiResponse,
@@ -12,7 +11,6 @@ import {
   Province,
   Matiere,
   ApiResponse,
-  PaginatedResponse,
   Dossier
 } from '@/types/entities';
 
@@ -53,6 +51,12 @@ class ApiService {
 
   async getConcoursById(id: number): Promise<ApiResponse<Concours>> {
     return this.request(`/concours/${id}`);
+  }
+
+  async deleteConcours(id: number): Promise<ApiResponse<any>> {
+    return this.request(`/concours/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Candidat endpoints - adapter aux nouvelles spécifications
@@ -145,6 +149,41 @@ class ApiService {
   // Niveau endpoints
   async getNiveaux(): Promise<ApiResponse<Niveau[]>> {
     return this.request('/niveaux');
+  }
+
+  // Etablissement endpoints - nouvelles méthodes ajoutées
+  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
+    return this.request('/etablissements');
+  }
+
+  async createEtablissement(data: {
+    nom: string;
+    adresse: string;
+    telephone: string;
+    email: string;
+    province_id: number;
+  }): Promise<ApiResponse<Etablissement>> {
+    return this.request('/etablissements', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteEtablissement(id: number): Promise<ApiResponse<any>> {
+    return this.request(`/etablissements/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Statistics endpoints - nouvelles méthodes ajoutées
+  async getStatistics(): Promise<ApiResponse<{
+    candidats: number;
+    concours: number;
+    etablissements: number;
+    participations: number;
+    paiements: number;
+  }>> {
+    return this.request('/statistics');
   }
 
   // Session simulation locale

@@ -1,4 +1,3 @@
-
 // Types pour toutes les entités du système selon l'API gabcnc.labodev.link
 
 export interface Candidat {
@@ -110,6 +109,14 @@ export interface ApiResponse<T> {
 
 export interface ConcoursApiResponse {
   data: Concours[];
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
 }
 
 // Types pour les autres entités qui peuvent être nécessaires
