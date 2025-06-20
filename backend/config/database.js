@@ -23,10 +23,10 @@ const createConnection = async () => {
       queueLimit: 0
     });
     
-    console.log('✅ Connexion à MySQL établie');
+    console.log(' Connexion à MySQL établie');
     return pool;
   } catch (error) {
-    console.error('❌ Erreur de connexion à MySQL:', error);
+    console.error(' Erreur de connexion à MySQL:', error);
     throw error;
   }
 };

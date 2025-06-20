@@ -126,7 +126,7 @@ const Candidature = () => {
       navigate(`/confirmation/${numeroRedirection}`);
     },
     onError: (error) => {
-      console.error('Error creating candidature:', error);
+      console.error('Error la creatio candidature:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de votre candidature",

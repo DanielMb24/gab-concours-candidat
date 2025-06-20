@@ -7,7 +7,7 @@ const { createConnection } = require('./config/database');
 const corsMiddleware = require('./middleware/cors');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Middlewares
 app.use(corsMiddleware);
@@ -103,14 +103,14 @@ const startServer = async () => {
     await createConnection();
     
     app.listen(PORT, () => {
-      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-      console.log(`📡 API accessible sur: http://localhost:${PORT}/api`);
-      console.log(`🗄️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
-      console.log(`👨‍💼 Interface admin: http://localhost:5173/admin`);
-      console.log(`🔑 Login admin: admin@gabconcours.ga / admin123`);
+      console.log(` Serveur démarré sur le port ${PORT}`);
+      console.log(` API accessible sur: http://localhost:${PORT}/api`);
+      console.log(`️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
+      console.log(` Interface admin: http://localhost:5173/admin`);
+      console.log(` Login admin: admin@gabconcours.ga / admin123`);
     });
   } catch (error) {
-    console.error('❌ Erreur lors du démarrage du serveur:', error);
+    console.error(' Erreur lors du démarrage du serveur:', error);
     process.exit(1);
   }
 };
