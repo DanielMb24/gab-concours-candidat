@@ -1,10 +1,9 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Copy, User, GraduationCap, MapPin, Calendar } from 'lucide-react';
+import { CheckCircle, Copy, User, Calendar } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
@@ -13,25 +12,11 @@ const Confirmation = () => {
   const { numeroCandidature } = useParams<{ numeroCandidature: string }>();
   const navigate = useNavigate();
 
-  // Simulation d'une participation avec les bonnes propriétés
-  const simulatedParticipation = {
-    id: Number(numeroCandidature) || 1,
-    candidat_id: 1,
-    concours_id: 1,
-    stspar: 1,
-    numero_candidature: numeroCandidature || `CONC2024${String(Date.now()).slice(-6)}`,
-    statut: 'inscrit' as const,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-
-  const participation = simulatedParticipation;
-
   const handleContinuer = () => {
-    if (participation) {
-      // Créer une session pour cette participation
-      apiService.createSession(participation.id);
-      navigate(`/documents/${participation.id}`);
+    if (numeroCandidature) {
+      // Créer une session locale
+      apiService.createSession(numeroCandidature);
+      navigate(`/documents/${numeroCandidature}`);
     }
   };
 
@@ -44,6 +29,15 @@ const Confirmation = () => {
       });
     }
   };
+
+  // Générer un numéro de candidature au format demandé
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const sequence = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+  
+  const generatedNumber = numeroCandidature || `GABCONCOURS${year}/${month}/${day}/${sequence}`;
 
   return (
     <Layout>
@@ -72,7 +66,7 @@ const Confirmation = () => {
                     Numéro de candidature
                   </h3>
                   <p className="text-2xl font-mono font-bold text-foreground">
-                    {numeroCandidature}
+                    {generatedNumber}
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Conservez précieusement ce numéro pour suivre votre candidature
@@ -95,8 +89,8 @@ const Confirmation = () => {
                 <User className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium">Statut</p>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {participation.statut}
+                  <p className="text-sm text-muted-foreground">
+                    Candidature créée
                   </p>
                 </div>
               </div>
@@ -104,9 +98,9 @@ const Confirmation = () => {
               <div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
                 <Calendar className="h-5 w-5 text-primary" />
                 <div>
-                  <p className="font-medium">Date d'inscription</p>
+                  <p className="font-medium">Date de création</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(participation.created_at).toLocaleDateString('fr-FR')}
+                    {today.toLocaleDateString('fr-FR')}
                   </p>
                 </div>
               </div>
@@ -118,7 +112,16 @@ const Confirmation = () => {
                 <li>Déposer vos documents justificatifs</li>
                 <li>Effectuer le paiement des frais d'inscription</li>
                 <li>Attendre la validation de votre dossier</li>
+                <li>Recevoir la convocation aux épreuves</li>
               </ol>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">Important</h4>
+              <p className="text-sm text-yellow-700">
+                Ce numéro de candidature est unique et vous permettra de suivre l'évolution 
+                de votre dossier. Notez-le soigneusement ou conservez cette page.
+              </p>
             </div>
           </CardContent>
         </Card>

@@ -8,10 +8,23 @@ const Participation = require('../models/Participation');
 // Configuration multer pour l'upload de fichiers
 const upload = multer({ dest: 'uploads/' });
 
+// Fonction pour générer le numéro unique de candidature
+function generateNupcan() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `GABCONCOURS${year}/${month}/${day}/${random}`;
+}
+
 // POST /api/etudiants - Créer un étudiant complet avec participation
 router.post('/', upload.single('photo'), async (req, res) => {
   try {
     console.log('Données reçues:', req.body);
+    
+    // Générer le numéro unique de candidature
+    const nupcan = generateNupcan();
     
     // Créer le candidat
     const candidatData = {
@@ -24,9 +37,10 @@ router.post('/', upload.single('photo'), async (req, res) => {
       telcan: req.body.telcan,
       phtcan: req.file ? req.file.path : req.body.phtcan,
       proorg: req.body.proorg,
-      proact: req.body.proact,
-      proaff: req.body.proaff,
-      ldncan: req.body.ldncan
+      proact: req.body.proact || req.body.proorg,
+      proaff: req.body.proaff || req.body.proorg,
+      ldncan: req.body.ldncan,
+      nupcan: nupcan
     };
 
     const candidat = await Candidat.create(candidatData);
@@ -46,7 +60,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
     res.status(201).json({ 
       success: true, 
       data: {
-        ...candidat,
+        ...candidat.toJSON(),
         participation: participation
       }, 
       message: 'Étudiant créé avec succès' 

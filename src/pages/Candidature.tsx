@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ const Candidature = () => {
   const navigate = useNavigate();
   
   const [candidat, setCandidatForm] = useState({
+    nipcan: '',
     nomcan: '',
     prncan: '',
     dtncan: '',
@@ -24,9 +26,6 @@ const Candidature = () => {
     proorg: '',
     proact: '',
     proaff: '',
-    nipcan: '',
-    niveau_id: '',
-    phtcan: ''
   });
 
   const [searchingNip, setSearchingNip] = useState(false);
@@ -46,7 +45,7 @@ const Candidature = () => {
   const provinces = provincesResponse?.data || [];
   const concours = concoursResponse?.data;
 
-  // Recherche par NIP
+  // Recherche par NIP gabonais
   const nipSearchMutation = useMutation({
     mutationFn: (nip: string) => apiService.getCandidatByNip(nip),
     onSuccess: (response) => {
@@ -55,15 +54,13 @@ const Candidature = () => {
         ...prev,
         nomcan: candidatData.nomcan,
         prncan: candidatData.prncan,
-        dtncan: candidatData.dtncan.split(' ')[0], // Format date
+        dtncan: candidatData.dtncan.split('T')[0], // Format date
         ldncan: candidatData.ldncan,
         telcan: candidatData.telcan,
         maican: candidatData.maican,
         proorg: candidatData.proorg.toString(),
         proact: candidatData.proact.toString(),
         proaff: candidatData.proaff.toString(),
-        niveau_id: candidatData.niveau_id.toString(),
-        phtcan: candidatData.phtcan || '',
       }));
       toast({
         title: "Informations trouvées",
@@ -73,7 +70,7 @@ const Candidature = () => {
     onError: () => {
       toast({
         title: "NIP non trouvé",
-        description: "Aucun candidat trouvé avec ce NIP",
+        description: "Aucun candidat trouvé avec ce NIP gabonais",
         variant: "destructive",
       });
     },
@@ -82,27 +79,47 @@ const Candidature = () => {
     }
   });
 
-  // Création de candidature avec étudiant endpoint
+  // Création de candidature
   const createCandidatureMutation = useMutation({
     mutationFn: async (candidatData: typeof candidat) => {
       console.log('Creating candidature with data:', candidatData);
+      console.log('Concours data:', concours);
+      
+      // Validation des données requises
+      if (!concours?.niveau_id) {
+        throw new Error('Niveau du concours non trouvé');
+      }
       
       // Préparer les données pour l'endpoint /etudiants
       const formData = new FormData();
-      formData.append('niveau_id', concours?.niveau_id || '');
-      formData.append('filiere_id', '1'); // À adapter selon vos besoins
-      formData.append('nipcan', candidatData.nipcan);
+      formData.append('niveau_id', concours.niveau_id.toString());
+      
+      // NIP optionnel
+      if (candidatData.nipcan && candidatData.nipcan.trim()) {
+        formData.append('nipcan', candidatData.nipcan.trim());
+      }
+      
+      // Champs obligatoires
       formData.append('nomcan', candidatData.nomcan);
       formData.append('prncan', candidatData.prncan);
       formData.append('maican', candidatData.maican);
       formData.append('dtncan', candidatData.dtncan);
       formData.append('telcan', candidatData.telcan);
-      formData.append('phtcan', candidatData.phtcan);
-      formData.append('proorg', candidatData.proorg);
-      formData.append('proact', candidatData.proact);
-      formData.append('proaff', candidatData.proaff);
       formData.append('ldncan', candidatData.ldncan);
+      
+      // Provinces (convertir en nombres)
+      formData.append('proorg', candidatData.proorg);
+      formData.append('proact', candidatData.proact || candidatData.proorg);
+      formData.append('proaff', candidatData.proaff || candidatData.proorg);
+      
+      // ID du concours
       formData.append('concours_id', concoursId || '');
+
+      // Log des données FormData pour debug
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       return apiService.createEtudiant(formData);
     },
@@ -111,25 +128,24 @@ const Candidature = () => {
       
       const candidatCreated = response.data;
       
-      // Créer une session locale si participation existe
-      if (candidatCreated.participation?.id) {
-        await apiService.createSession(candidatCreated.participation.id);
+      // Créer une session locale avec le nupcan généré
+      if (candidatCreated.nupcan) {
+        await apiService.createSession(candidatCreated.nupcan);
       }
       
       toast({
         title: "Candidature créée !",
-        description: `Votre candidature a été enregistrée avec succès`,
+        description: `Votre candidature a été enregistrée avec succès. Numéro: ${candidatCreated.nupcan}`,
       });
       
-      // Utiliser le nupcan ou l'id pour la redirection
-      const numeroRedirection = candidatCreated.nupcan || candidatCreated.id;
-      navigate(`/confirmation/${numeroRedirection}`);
+      // Rediriger vers la page de confirmation avec le nupcan
+      navigate(`/confirmation/${candidatCreated.nupcan}`);
     },
     onError: (error) => {
       console.error('Error la creatio candidature:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de votre candidature",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création de votre candidature",
         variant: "destructive",
       });
     }
@@ -154,7 +170,7 @@ const Candidature = () => {
     
     // Validation basique
     if (!candidat.nomcan || !candidat.prncan || !candidat.maican || !candidat.telcan || 
-        !candidat.dtncan || !candidat.proorg) {
+        !candidat.dtncan || !candidat.proorg || !candidat.ldncan) {
       toast({
         title: "Champs requis",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -163,12 +179,19 @@ const Candidature = () => {
       return;
     }
 
+    // Validation de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(candidat.maican)) {
+      toast({
+        title: "Email invalide",
+        description: "Veuillez saisir une adresse email valide",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createCandidatureMutation.mutate(candidat);
   };
-
-  function setPhoto(file: File) {
-    
-  }
 
   return (
     <Layout>
@@ -190,12 +213,13 @@ const Candidature = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Champ NIP gabonais en premier */}
               <div className="p-4 bg-muted rounded-lg">
                 <Label htmlFor="nipcan" className="text-sm font-medium">
-                  NIP (Numéro d'Identification Personnel)
+                  NIP Gabonais (Numéro d'Identification Personnel)
                 </Label>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Si vous avez déjà un NIP gabonais, saisissez-le pour auto-remplir vos informations
+                  Si vous avez un NIP gabonais, saisissez-le pour auto-remplir vos informations
                 </p>
                 <div className="flex gap-2">
                   <Input
@@ -315,7 +339,7 @@ const Candidature = () => {
                   </Select>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <Label htmlFor="proaff">Province d'affectation souhaitée</Label>
                   <Select value={candidat.proaff} onValueChange={(value) => handleInputChange('proaff', value)}>
                     <SelectTrigger>
@@ -330,27 +354,13 @@ const Candidature = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div>
-                  <Label htmlFor="phtcan">Photo (fichier)</Label>
-                  <Input
-                      id="phtcan"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          const file = e.target.files[0];
-                          setPhoto(file); // à définir dans ton state
-                        }
-                      }}
-                  />
-                </div>
               </div>
 
               <div className="flex justify-end">
                 <Button 
                   type="submit"
                   disabled={createCandidatureMutation.isPending}
+                  className="bg-primary hover:bg-primary/90"
                 >
                   {createCandidatureMutation.isPending ? 'Création...' : 'Créer ma candidature'}
                 </Button>

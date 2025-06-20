@@ -12,8 +12,8 @@ import {
   Province,
   Matiere,
   ApiResponse,
-  PaginatedResponse,
-  Dossier
+  Dossier,
+  PaginatedResponse
 } from '@/types/entities';
 
 // Utiliser le backend local
@@ -25,19 +25,27 @@ class ApiService {
     
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Bearer 123',
         ...options?.headers,
       },
       ...options,
     };
+
+    // Ne pas ajouter Content-Type pour FormData
+    if (!(options?.body instanceof FormData) && !config.headers?.['Content-Type']) {
+      config.headers = {
+        ...config.headers,
+        'Content-Type': 'application/json',
+      };
+    }
 
     console.log(`API Request: ${config.method || 'GET'} ${url}`);
     
     const response = await fetch(url, config);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
     
@@ -55,63 +63,16 @@ class ApiService {
     return this.request(`/concours/${id}`);
   }
 
-  async createConcours(data: Partial<Concours>): Promise<ApiResponse<Concours>> {
-    return this.request('/concours', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateConcours(id: number, data: Partial<Concours>): Promise<ApiResponse<Concours>> {
+  async deleteConcours(id: number): Promise<ApiResponse<any>> {
     return this.request(`/concours/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteConcours(id: number): Promise<ApiResponse<void>> {
-    return this.request(`/concours/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Etablissement endpoints
-  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
-    return this.request('/etablissements');
-  }
-
-  async getEtablissementById(id: number): Promise<ApiResponse<Etablissement>> {
-    return this.request(`/etablissements/${id}`);
-  }
-
-  async createEtablissement(data: Partial<Etablissement>): Promise<ApiResponse<Etablissement>> {
-    return this.request('/etablissements', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateEtablissement(id: number, data: Partial<Etablissement>): Promise<ApiResponse<Etablissement>> {
-    return this.request(`/etablissements/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteEtablissement(id: number): Promise<ApiResponse<void>> {
-    return this.request(`/etablissements/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Candidat endpoints
-  async getAllCandidats(): Promise<ApiResponse<Candidat[]>> {
-    return this.request('/candidats');
-  }
-
   async createCandidat(data: {
     niveau_id: number;
-    nipcan: string;
+    nipcan?: string;
     nomcan: string;
     prncan: string;
     maican: string;
@@ -129,29 +90,35 @@ class ApiService {
     });
   }
 
-  async getCandidatById(id: number): Promise<ApiResponse<Candidat>> {
-    return this.request(`/candidats/${id}`);
-  }
-
   async getCandidatByNip(nip: string): Promise<ApiResponse<Candidat>> {
     return this.request(`/candidats/nip/${nip}`);
   }
 
-  async updateCandidat(id: number, data: Partial<Candidat>): Promise<ApiResponse<Candidat>> {
-    return this.request(`/candidats/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  async getCandidatByNupcan(nupcan: string): Promise<ApiResponse<Candidat>> {
+    return this.request(`/candidats/nupcan/${nupcan}`);
   }
 
-  // Etudiant endpoints (pour l'inscription complète)
+  // Etudiant endpoints (pour l'inscription complète avec concours)
   async createEtudiant(data: FormData): Promise<ApiResponse<Candidat>> {
     return this.request('/etudiants', {
       method: 'POST',
       body: data,
-      headers: {
-        'Authorization': 'Bearer 123',
-      },
+    });
+  }
+
+  // Document endpoints
+  async createDocument(data: { nomdoc: string }): Promise<ApiResponse<Document>> {
+    return this.request('/documents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Dossier endpoints (upload de fichiers)
+  async createDossier(data: FormData): Promise<ApiResponse<Dossier[]>> {
+    return this.request('/dossiers', {
+      method: 'POST',
+      body: data,
     });
   }
 
@@ -167,69 +134,6 @@ class ApiService {
     });
   }
 
-  async getParticipationById(id: number): Promise<ApiResponse<Participation>> {
-    return this.request(`/participations/${id}`);
-  }
-
-  async getParticipationByNumero(numero: string): Promise<ApiResponse<Participation>> {
-    return this.request(`/participations/numero/${numero}`);
-  }
-
-  async getParticipationsByCandidatId(candidatId: number): Promise<ApiResponse<Participation[]>> {
-    return this.request(`/candidats/${candidatId}/participations`);
-  }
-
-  // Document endpoints
-  async createDocument(data: { nomdoc: string }): Promise<ApiResponse<Document>> {
-    return this.request('/documents', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async getDocumentsByParticipation(participationId: number): Promise<ApiResponse<Document[]>> {
-    return this.request(`/participations/${participationId}/documents`);
-  }
-
-  async uploadDocument(participationId: number, file: File, type: string): Promise<ApiResponse<Document>> {
-    const formData = new FormData();
-    formData.append('concours_id', '1');
-    formData.append('nipcan', 'temp');
-    formData.append('documents', file);
-    formData.append('type', type);
-
-    return this.request('/dossiers', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Authorization': 'Bearer 123',
-      },
-    }).then(response => {
-      return {
-        data: {
-          id: Date.now(),
-          nomdoc: file.name,
-          type: type,
-          nom_fichier: file.name,
-          statut: 'en_attente' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-      };
-    });
-  }
-
-  // Dossier endpoints
-  async createDossier(data: FormData): Promise<ApiResponse<Dossier[]>> {
-    return this.request('/dossiers', {
-      method: 'POST',
-      body: data,
-      headers: {
-        'Authorization': 'Bearer 123',
-      },
-    });
-  }
-
   // Paiement endpoints
   async createPaiement(data: {
     candidat_id: number;
@@ -239,16 +143,6 @@ class ApiService {
     return this.request('/payements', {
       method: 'POST',
       body: JSON.stringify(data),
-    });
-  }
-
-  async getPaiementByParticipation(participationId: number): Promise<ApiResponse<Paiement>> {
-    return this.request(`/participations/${participationId}/paiement`);
-  }
-
-  async validatePaiement(paiementId: number): Promise<ApiResponse<Paiement>> {
-    return this.request(`/paiements/${paiementId}/validate`, {
-      method: 'POST',
     });
   }
 
@@ -262,23 +156,53 @@ class ApiService {
     return this.request('/niveaux');
   }
 
+  // Etablissement endpoints
+  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
+    return this.request('/etablissements');
+  }
+
+  async createEtablissement(data: {
+    nom: string;
+    adresse: string;
+    telephone: string;
+    email: string;
+    province_id: number;
+  }): Promise<ApiResponse<Etablissement>> {
+    return this.request('/etablissements', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteEtablissement(id: number): Promise<ApiResponse<any>> {
+    return this.request(`/etablissements/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Statistics endpoints
-  async getStatistics(): Promise<ApiResponse<any>> {
+  async getStatistics(): Promise<ApiResponse<{
+    candidats: number;
+    concours: number;
+    etablissements: number;
+    participations: number;
+    paiements: number;
+  }>> {
     return this.request('/statistics');
   }
 
-  // Authentication/Session simulation
-  async createSession(participationId: number): Promise<{ sessionId: string; participationId: number }> {
-    const sessionId = `session_${Date.now()}_${participationId}`;
+  // Session simulation locale
+  async createSession(candidatureId: string): Promise<{ sessionId: string; candidatureId: string }> {
+    const sessionId = `session_${Date.now()}_${candidatureId}`;
     localStorage.setItem('gabconcours_session', JSON.stringify({
       sessionId,
-      participationId,
+      candidatureId,
       createdAt: new Date().toISOString()
     }));
-    return { sessionId, participationId };
+    return { sessionId, candidatureId };
   }
 
-  getSession(): { sessionId: string; participationId: number } | null {
+  getSession(): { sessionId: string; candidatureId: string } | null {
     const session = localStorage.getItem('gabconcours_session');
     return session ? JSON.parse(session) : null;
   }

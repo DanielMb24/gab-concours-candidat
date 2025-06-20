@@ -26,6 +26,7 @@ app.use('/api/provinces', require('./routes/provinces'));
 app.use('/api/payements', require('./routes/paiements'));
 app.use('/api/dossiers', require('./routes/dossiers'));
 app.use('/api/etablissements', require('./routes/etablissements'));
+app.use('/api/niveaux', require('./routes/niveaux'));
 
 // Routes d'administration
 app.use('/api', require('./routes/admin'));
@@ -43,7 +44,8 @@ app.get('/api', (req, res) => {
       '/api/provinces',
       '/api/payements',
       '/api/dossiers',
-      '/api/etablissements'
+      '/api/etablissements',
+      '/api/niveaux'
     ]
   });
 });
@@ -59,13 +61,16 @@ app.get('/api/statistics', async (req, res) => {
     const [candidatsCount] = await connection.execute('SELECT COUNT(*) as count FROM candidats');
     const [participationsCount] = await connection.execute('SELECT COUNT(*) as count FROM participations');
     const [etablissementsCount] = await connection.execute('SELECT COUNT(*) as count FROM etablissements');
+    const [paiementsCount] = await connection.execute('SELECT COUNT(*) as count FROM paiements');
     
     res.json({
+      success: true,
       data: {
         concours: concoursCount[0].count,
         candidats: candidatsCount[0].count,
         participations: participationsCount[0].count,
-        etablissements: etablissementsCount[0].count
+        etablissements: etablissementsCount[0].count,
+        paiements: paiementsCount[0].count
       }
     });
   } catch (error) {
