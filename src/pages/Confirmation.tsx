@@ -15,14 +15,14 @@ const Confirmation = () => {
   const handleContinuer = () => {
     if (numeroCandidature) {
       // Créer une session locale
-      apiService.createSession(numeroCandidature);
+      apiService.createSession(numeroCandidature).then(r => {});
       navigate(`/documents/${numeroCandidature}`);
     }
   };
 
   const copyToClipboard = () => {
     if (numeroCandidature) {
-      navigator.clipboard.writeText(numeroCandidature);
+      navigator.clipboard.writeText(numeroCandidature).then(r => {});
       toast({
         title: "Copié !",
         description: "Le numéro de candidature a été copié dans le presse-papiers",

@@ -105,22 +105,18 @@ const Candidature = () => {
       formData.append('dtncan', candidatData.dtncan);
       formData.append('telcan', candidatData.telcan);
       formData.append('ldncan', candidatData.ldncan);
-
-      // Provinces (convertir en nombres)
       formData.append('proorg', candidatData.proorg);
       formData.append('proact', candidatData.proact || candidatData.proorg);
       formData.append('proaff', candidatData.proaff || candidatData.proorg);
-
-      // ID du concours
       formData.append('concours_id', concoursId || '');
 
-      // Log des données FormData pour debug
+
       console.log('FormData entries:');
       for (const [key, value] of formData.entries()) {
         console.log(`${key}: ${value}`);
       }
 
-      return apiService.createEtudiant(formData);
+      return apiService.createCandidat(formData);
     },
     onSuccess: async (response) => {
       console.log('Candidature created successfully:', response);
