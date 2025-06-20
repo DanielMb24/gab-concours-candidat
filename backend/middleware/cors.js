@@ -7,8 +7,8 @@ const corsOptions = {
     'http://localhost:3002',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3002',
-    'http://localhost:8080',
-    'http://127.0.0.1:8080'
+    'http://localhost:8088',
+    'http://127.0.0.1:8088'
   ],
   credentials: true,
   optionsSuccessStatus: 200,
