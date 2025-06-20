@@ -83,24 +83,44 @@ const Candidature = () => {
   const createCandidatureMutation = useMutation({
     mutationFn: async (candidatData: typeof candidat) => {
       console.log('Creating candidature with data:', candidatData);
+      console.log('Concours data:', concours);
+      
+      // Validation des données requises
+      if (!concours?.niveau_id) {
+        throw new Error('Niveau du concours non trouvé');
+      }
       
       // Préparer les données pour l'endpoint /etudiants
       const formData = new FormData();
-      formData.append('niveau_id', concours?.niveau_id || '');
+      formData.append('niveau_id', concours.niveau_id.toString());
       formData.append('filiere_id', '1'); // À adapter selon vos besoins
-      if (candidatData.nipcan) {
-        formData.append('nipcan', candidatData.nipcan);
+      
+      // NIP optionnel
+      if (candidatData.nipcan && candidatData.nipcan.trim()) {
+        formData.append('nipcan', candidatData.nipcan.trim());
       }
+      
+      // Champs obligatoires
       formData.append('nomcan', candidatData.nomcan);
       formData.append('prncan', candidatData.prncan);
       formData.append('maican', candidatData.maican);
       formData.append('dtncan', candidatData.dtncan);
       formData.append('telcan', candidatData.telcan);
-      formData.append('proorg', candidatData.proorg);
-      formData.append('proact', candidatData.proact);
-      formData.append('proaff', candidatData.proaff);
       formData.append('ldncan', candidatData.ldncan);
+      
+      // Provinces (convertir en nombres)
+      formData.append('proorg', candidatData.proorg);
+      formData.append('proact', candidatData.proact || candidatData.proorg); // Si pas de province actuelle, utiliser celle d'origine
+      formData.append('proaff', candidatData.proaff || candidatData.proorg); // Si pas de préférence, utiliser celle d'origine
+      
+      // ID du concours
       formData.append('concours_id', concoursId || '');
+
+      // Log des données FormData pour debug
+      console.log('FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       return apiService.createEtudiant(formData);
     },
@@ -126,7 +146,7 @@ const Candidature = () => {
       console.error('Error creating candidature:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de votre candidature",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création de votre candidature",
         variant: "destructive",
       });
     }
@@ -151,10 +171,21 @@ const Candidature = () => {
     
     // Validation basique
     if (!candidat.nomcan || !candidat.prncan || !candidat.maican || !candidat.telcan || 
-        !candidat.dtncan || !candidat.proorg) {
+        !candidat.dtncan || !candidat.proorg || !candidat.ldncan) {
       toast({
         title: "Champs requis",
         description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validation de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(candidat.maican)) {
+      toast({
+        title: "Email invalide",
+        description: "Veuillez saisir une adresse email valide",
         variant: "destructive",
       });
       return;

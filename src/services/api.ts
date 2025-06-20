@@ -1,3 +1,4 @@
+
 import { 
   Concours, 
   ConcoursApiResponse,
@@ -11,7 +12,8 @@ import {
   Province,
   Matiere,
   ApiResponse,
-  Dossier
+  Dossier,
+  PaginatedResponse
 } from '@/types/entities';
 
 // Utiliser l'API externe
@@ -25,17 +27,26 @@ class ApiService {
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer 123',
-        'Content-Type': 'application/json',
         ...options?.headers,
       },
       ...options,
     };
+
+    // Ne pas ajouter Content-Type pour FormData
+    if (!(options?.body instanceof FormData) && !config.headers?.['Content-Type']) {
+      config.headers = {
+        ...config.headers,
+        'Content-Type': 'application/json',
+      };
+    }
 
     console.log(`API Request: ${config.method || 'GET'} ${url}`);
     
     const response = await fetch(url, config);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
     
@@ -59,7 +70,7 @@ class ApiService {
     });
   }
 
-  // Candidat endpoints - adapter aux nouvelles spécifications
+  // Candidat endpoints
   async createCandidat(data: {
     niveau_id: number;
     nipcan?: string;
@@ -86,13 +97,14 @@ class ApiService {
 
   // Etudiant endpoints (pour l'inscription complète avec concours)
   async createEtudiant(data: FormData): Promise<ApiResponse<Candidat>> {
+    // Pour FormData, ne pas définir Content-Type
     return this.request('/etudiants', {
       method: 'POST',
       body: data,
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer 123',
-        // Ne pas définir Content-Type pour FormData
+        // Ne pas définir Content-Type pour FormData, le navigateur le fait automatiquement
       },
     });
   }
@@ -151,7 +163,7 @@ class ApiService {
     return this.request('/niveaux');
   }
 
-  // Etablissement endpoints - nouvelles méthodes ajoutées
+  // Etablissement endpoints
   async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
     return this.request('/etablissements');
   }
@@ -175,7 +187,7 @@ class ApiService {
     });
   }
 
-  // Statistics endpoints - nouvelles méthodes ajoutées
+  // Statistics endpoints
   async getStatistics(): Promise<ApiResponse<{
     candidats: number;
     concours: number;
