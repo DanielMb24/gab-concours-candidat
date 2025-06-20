@@ -1,10 +1,10 @@
-
 const express = require('express');
 const path = require('path');
 require('dotenv').config();
 
 const { createConnection } = require('./config/database');
 const corsMiddleware = require('./middleware/cors');
+const {getConnection} = require("./config/database");
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -33,7 +33,7 @@ app.use('/api', require('./routes/admin'));
 
 // Route de base avec statistiques
 app.get('/api', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'API GabConcours - Backend fonctionnel',
     version: '1.0.0',
     endpoints: [
@@ -55,14 +55,14 @@ app.get('/api/statistics', async (req, res) => {
   try {
     const { getConnection } = require('./config/database');
     const connection = getConnection();
-    
+
     // Récupérer les statistiques
     const [concoursCount] = await connection.execute('SELECT COUNT(*) as count FROM concours');
     const [candidatsCount] = await connection.execute('SELECT COUNT(*) as count FROM candidats');
     const [participationsCount] = await connection.execute('SELECT COUNT(*) as count FROM participations');
     const [etablissementsCount] = await connection.execute('SELECT COUNT(*) as count FROM etablissements');
     const [paiementsCount] = await connection.execute('SELECT COUNT(*) as count FROM paiements');
-    
+
     res.json({
       success: true,
       data: {
@@ -75,27 +75,27 @@ app.get('/api/statistics', async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des statistiques:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Erreur serveur', 
-      errors: [error.message] 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      errors: [error.message]
     });
   }
 });
 
 // Gestion des erreurs 404
 app.use('*', (req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Endpoint non trouvé' 
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint non trouvé'
   });
 });
 
 // Gestion des erreurs globales
 app.use((error, req, res, next) => {
   console.error('Erreur serveur:', error);
-  res.status(500).json({ 
-    success: false, 
+  res.status(500).json({
+    success: false,
     message: 'Erreur interne du serveur',
     errors: process.env.NODE_ENV === 'development' ? [error.message] : []
   });
@@ -106,16 +106,16 @@ const startServer = async () => {
   try {
     // Initialiser la connexion à la base de données
     await createConnection();
-    
+
     app.listen(PORT, () => {
-      console.log(` Serveur démarré sur le port ${PORT}`);
-      console.log(` API accessible sur: http://localhost:${PORT}/api`);
-      console.log(`️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
-      console.log(` Interface admin: http://localhost:5173/admin`);
-      console.log(` Login admin: admin@gabconcours.ga / admin123`);
+      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+      console.log(`📡 API accessible sur: http://localhost:${PORT}/api`);
+      console.log(`🗄️  Base de données: ${process.env.DB_NAME || 'gabconcours'}`);
+      console.log(`👨‍💼 Interface admin: http://localhost:5173/admin`);
+      console.log(`🔑 Login admin: admin@gabconcours.ga / admin123`);
     });
   } catch (error) {
-    console.error(' Erreur lors du démarrage du serveur:', error);
+    console.error('❌ Erreur lors du démarrage du serveur:', error);
     process.exit(1);
   }
 };

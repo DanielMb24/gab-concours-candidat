@@ -1,14 +1,13 @@
-
-import { 
-  Concours, 
+import {
+  Concours,
   ConcoursApiResponse,
-  Candidat, 
-  Participation, 
-  Document, 
-  Paiement, 
-  Etablissement, 
-  Filiere, 
-  Niveau, 
+  Candidat,
+  Participation,
+  Document,
+  Paiement,
+  Etablissement,
+  Filiere,
+  Niveau,
   Province,
   Matiere,
   ApiResponse,
@@ -17,12 +16,12 @@ import {
 } from '@/types/entities';
 
 // Utiliser le backend local
-const API_BASE_URL = 'https://gabcnc.labodev.link/api';
+const API_BASE_URL = 'http://localhost:3002/api';
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const config: RequestInit = {
       headers: {
         'Accept': 'application/json',
@@ -40,15 +39,15 @@ class ApiService {
     }
 
     console.log(`API Request: ${config.method || 'GET'} ${url}`);
-    
+
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API Error: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     console.log(`API Response:`, data);
     return data;

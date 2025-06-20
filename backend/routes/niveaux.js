@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 
@@ -30,10 +29,10 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des niveaux:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Erreur serveur', 
-      errors: [error.message] 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      errors: [error.message]
     });
   }
 });

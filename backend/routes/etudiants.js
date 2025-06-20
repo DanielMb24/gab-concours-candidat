@@ -1,4 +1,3 @@
-
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
@@ -22,10 +21,10 @@ function generateNupcan() {
 router.post('/', upload.single('photo'), async (req, res) => {
   try {
     console.log('Données reçues:', req.body);
-    
+
     // Générer le numéro unique de candidature
     const nupcan = generateNupcan();
-    
+
     // Créer le candidat
     const candidatData = {
       niveau_id: req.body.niveau_id,
@@ -44,7 +43,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
     };
 
     const candidat = await Candidat.create(candidatData);
-    
+
     // Créer la participation si concours_id est fourni
     let participation = null;
     if (req.body.concours_id) {
@@ -57,20 +56,20 @@ router.post('/', upload.single('photo'), async (req, res) => {
       participation = await Participation.create(participationData);
     }
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       data: {
         ...candidat.toJSON(),
         participation: participation
-      }, 
-      message: 'Étudiant créé avec succès' 
+      },
+      message: 'Étudiant créé avec succès'
     });
   } catch (error) {
     console.error('Erreur lors de la création de l\'étudiant:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Erreur serveur', 
-      errors: [error.message] 
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      errors: [error.message]
     });
   }
 });
