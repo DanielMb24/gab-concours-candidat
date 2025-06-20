@@ -16,8 +16,8 @@ import {
   PaginatedResponse
 } from '@/types/entities';
 
-// Utiliser l'API externe
-const API_BASE_URL = 'https://gabcnc.labodev.link/api';
+// Utiliser le backend local
+const API_BASE_URL = 'http://localhost:3001/api';
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -26,7 +26,6 @@ class ApiService {
     const config: RequestInit = {
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Bearer 123',
         ...options?.headers,
       },
       ...options,
@@ -95,17 +94,15 @@ class ApiService {
     return this.request(`/candidats/nip/${nip}`);
   }
 
+  async getCandidatByNupcan(nupcan: string): Promise<ApiResponse<Candidat>> {
+    return this.request(`/candidats/nupcan/${nupcan}`);
+  }
+
   // Etudiant endpoints (pour l'inscription complète avec concours)
   async createEtudiant(data: FormData): Promise<ApiResponse<Candidat>> {
-    // Pour FormData, ne pas définir Content-Type
     return this.request('/etudiants', {
       method: 'POST',
       body: data,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer 123',
-        // Ne pas définir Content-Type pour FormData, le navigateur le fait automatiquement
-      },
     });
   }
 
@@ -122,10 +119,6 @@ class ApiService {
     return this.request('/dossiers', {
       method: 'POST',
       body: data,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer 123',
-      },
     });
   }
 

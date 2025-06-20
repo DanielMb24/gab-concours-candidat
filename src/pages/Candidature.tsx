@@ -93,7 +93,6 @@ const Candidature = () => {
       // Préparer les données pour l'endpoint /etudiants
       const formData = new FormData();
       formData.append('niveau_id', concours.niveau_id.toString());
-      formData.append('filiere_id', '1'); // À adapter selon vos besoins
       
       // NIP optionnel
       if (candidatData.nipcan && candidatData.nipcan.trim()) {
@@ -110,8 +109,8 @@ const Candidature = () => {
       
       // Provinces (convertir en nombres)
       formData.append('proorg', candidatData.proorg);
-      formData.append('proact', candidatData.proact || candidatData.proorg); // Si pas de province actuelle, utiliser celle d'origine
-      formData.append('proaff', candidatData.proaff || candidatData.proorg); // Si pas de préférence, utiliser celle d'origine
+      formData.append('proact', candidatData.proact || candidatData.proorg);
+      formData.append('proaff', candidatData.proaff || candidatData.proorg);
       
       // ID du concours
       formData.append('concours_id', concoursId || '');
@@ -136,7 +135,7 @@ const Candidature = () => {
       
       toast({
         title: "Candidature créée !",
-        description: `Votre candidature a été enregistrée avec succès`,
+        description: `Votre candidature a été enregistrée avec succès. Numéro: ${candidatCreated.nupcan}`,
       });
       
       // Rediriger vers la page de confirmation avec le nupcan
