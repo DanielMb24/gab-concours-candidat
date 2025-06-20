@@ -26,8 +26,6 @@ const Candidature = () => {
     proorg: '',
     proact: '',
     proaff: '',
-    niveau_id: '',
-    phtcan: ''
   });
 
   const [searchingNip, setSearchingNip] = useState(false);
@@ -63,8 +61,6 @@ const Candidature = () => {
         proorg: candidatData.proorg.toString(),
         proact: candidatData.proact.toString(),
         proaff: candidatData.proaff.toString(),
-        niveau_id: candidatData.niveau_id.toString(),
-        phtcan: candidatData.phtcan || '',
       }));
       toast({
         title: "Informations trouvées",
@@ -100,9 +96,6 @@ const Candidature = () => {
       formData.append('maican', candidatData.maican);
       formData.append('dtncan', candidatData.dtncan);
       formData.append('telcan', candidatData.telcan);
-      if (candidatData.phtcan) {
-        formData.append('phtcan', candidatData.phtcan);
-      }
       formData.append('proorg', candidatData.proorg);
       formData.append('proact', candidatData.proact);
       formData.append('proaff', candidatData.proaff);
@@ -116,7 +109,7 @@ const Candidature = () => {
       
       const candidatCreated = response.data;
       
-      // Créer une session locale avec le nupcan
+      // Créer une session locale avec le nupcan généré
       if (candidatCreated.nupcan) {
         await apiService.createSession(candidatCreated.nupcan);
       }

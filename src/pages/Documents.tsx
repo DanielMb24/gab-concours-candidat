@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
@@ -290,7 +290,7 @@ const Documents = () => {
                 ))}
               </div>
             </CardContent>
-          </Card>
+        </Card>
         )}
 
         {/* Instructions */}
