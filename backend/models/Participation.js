@@ -5,48 +5,34 @@ class Participation {
   static async create(participationData) {
     const connection = getConnection();
     
-    // Générer un numéro de candidature unique
-    const numero_candidature = `CONC2024${Date.now().toString().slice(-6)}`;
-    
     const [result] = await connection.execute(
-      `INSERT INTO participations (candidat_id, concours_id, stspar, numero_candidature, statut)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO participations (candidat_id, concours_id, stspar, statut)
+       VALUES (?, ?, ?, ?)`,
       [
         participationData.candidat_id,
         participationData.concours_id,
         participationData.stspar || 1,
-        numero_candidature,
         participationData.statut || 'inscrit'
       ]
     );
 
-    return { id: result.insertId, numero_candidature, ...participationData };
+    return {
+      id: result.insertId,
+      ...participationData,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
   }
 
   static async findById(id) {
     const connection = getConnection();
     const [rows] = await connection.execute(
-      `SELECT p.*, c.libcnc, e.nomets, ca.nomcan, ca.prncan
+      `SELECT p.*, c.libcnc, e.nomets
        FROM participations p
        LEFT JOIN concours c ON p.concours_id = c.id
        LEFT JOIN etablissements e ON c.etablissement_id = e.id
-       LEFT JOIN candidats ca ON p.candidat_id = ca.id
        WHERE p.id = ?`,
       [id]
-    );
-    return rows[0] || null;
-  }
-
-  static async findByNumero(numero) {
-    const connection = getConnection();
-    const [rows] = await connection.execute(
-      `SELECT p.*, c.libcnc, e.nomets, ca.nomcan, ca.prncan
-       FROM participations p
-       LEFT JOIN concours c ON p.concours_id = c.id
-       LEFT JOIN etablissements e ON c.etablissement_id = e.id
-       LEFT JOIN candidats ca ON p.candidat_id = ca.id
-       WHERE p.numero_candidature = ?`,
-      [numero]
     );
     return rows[0] || null;
   }
@@ -75,6 +61,12 @@ class Participation {
     );
 
     return this.findById(id);
+  }
+
+  static async delete(id) {
+    const connection = getConnection();
+    await connection.execute('DELETE FROM participations WHERE id = ?', [id]);
+    return { success: true };
   }
 }
 

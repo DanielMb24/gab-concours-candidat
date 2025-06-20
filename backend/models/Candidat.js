@@ -5,9 +5,6 @@ class Candidat {
   static async create(candidatData) {
     const connection = getConnection();
     
-    // Générer un numéro de candidature unique
-    const nupcan = `CONC2024${Date.now().toString().slice(-6)}`;
-    
     const [result] = await connection.execute(
       `INSERT INTO candidats (niveau_id, nipcan, nomcan, prncan, maican, dtncan, nupcan, telcan, phtcan, proorg, proact, proaff, ldncan)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -18,7 +15,7 @@ class Candidat {
         candidatData.prncan,
         candidatData.maican,
         candidatData.dtncan,
-        nupcan,
+        candidatData.nupcan,
         candidatData.telcan,
         candidatData.phtcan || null,
         candidatData.proorg,
@@ -28,7 +25,13 @@ class Candidat {
       ]
     );
 
-    return { id: result.insertId, nupcan, ...candidatData };
+    // Retourner l'objet créé avec l'ID généré
+    return {
+      id: result.insertId,
+      ...candidatData,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
   }
 
   static async findById(id) {
@@ -51,6 +54,18 @@ class Candidat {
        LEFT JOIN niveaux n ON c.niveau_id = n.id 
        WHERE c.nipcan = ?`,
       [nip]
+    );
+    return rows[0] || null;
+  }
+
+  static async findByNupcan(nupcan) {
+    const connection = getConnection();
+    const [rows] = await connection.execute(
+      `SELECT c.*, n.nomniv as niveau_nomniv 
+       FROM candidats c 
+       LEFT JOIN niveaux n ON c.niveau_id = n.id 
+       WHERE c.nupcan = ?`,
+      [nupcan]
     );
     return rows[0] || null;
   }

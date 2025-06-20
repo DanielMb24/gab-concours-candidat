@@ -142,9 +142,15 @@ const Candidature = () => {
     },
     onError: (error) => {
       console.error('Error creating candidature:', error);
+      let errorMessage = "Une erreur est survenue lors de la création de votre candidature";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création de votre candidature",
+        description: errorMessage,
         variant: "destructive",
       });
     }

@@ -99,6 +99,7 @@ class ApiService {
 
   // Etudiant endpoints (pour l'inscription complète avec concours)
   async createEtudiant(data: FormData): Promise<ApiResponse<Candidat>> {
+    console.log('Envoi des données FormData pour création étudiant');
     return this.request('/etudiants', {
       method: 'POST',
       body: data,
