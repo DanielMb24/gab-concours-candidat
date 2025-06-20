@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ const Candidature = () => {
   const navigate = useNavigate();
   
   const [candidat, setCandidatForm] = useState({
+    nipcan: '',
     nomcan: '',
     prncan: '',
     dtncan: '',
@@ -24,7 +26,6 @@ const Candidature = () => {
     proorg: '',
     proact: '',
     proaff: '',
-    nipcan: '',
     niveau_id: '',
     phtcan: ''
   });
@@ -46,7 +47,7 @@ const Candidature = () => {
   const provinces = provincesResponse?.data || [];
   const concours = concoursResponse?.data;
 
-  // Recherche par NIP
+  // Recherche par NIP gabonais
   const nipSearchMutation = useMutation({
     mutationFn: (nip: string) => apiService.getCandidatByNip(nip),
     onSuccess: (response) => {
@@ -55,7 +56,7 @@ const Candidature = () => {
         ...prev,
         nomcan: candidatData.nomcan,
         prncan: candidatData.prncan,
-        dtncan: candidatData.dtncan.split(' ')[0], // Format date
+        dtncan: candidatData.dtncan.split('T')[0], // Format date
         ldncan: candidatData.ldncan,
         telcan: candidatData.telcan,
         maican: candidatData.maican,
@@ -73,7 +74,7 @@ const Candidature = () => {
     onError: () => {
       toast({
         title: "NIP non trouvé",
-        description: "Aucun candidat trouvé avec ce NIP",
+        description: "Aucun candidat trouvé avec ce NIP gabonais",
         variant: "destructive",
       });
     },
@@ -82,7 +83,7 @@ const Candidature = () => {
     }
   });
 
-  // Création de candidature avec étudiant endpoint
+  // Création de candidature
   const createCandidatureMutation = useMutation({
     mutationFn: async (candidatData: typeof candidat) => {
       console.log('Creating candidature with data:', candidatData);
@@ -91,13 +92,17 @@ const Candidature = () => {
       const formData = new FormData();
       formData.append('niveau_id', concours?.niveau_id || '');
       formData.append('filiere_id', '1'); // À adapter selon vos besoins
-      formData.append('nipcan', candidatData.nipcan);
+      if (candidatData.nipcan) {
+        formData.append('nipcan', candidatData.nipcan);
+      }
       formData.append('nomcan', candidatData.nomcan);
       formData.append('prncan', candidatData.prncan);
       formData.append('maican', candidatData.maican);
       formData.append('dtncan', candidatData.dtncan);
       formData.append('telcan', candidatData.telcan);
-      formData.append('phtcan', candidatData.phtcan);
+      if (candidatData.phtcan) {
+        formData.append('phtcan', candidatData.phtcan);
+      }
       formData.append('proorg', candidatData.proorg);
       formData.append('proact', candidatData.proact);
       formData.append('proaff', candidatData.proaff);
@@ -111,9 +116,9 @@ const Candidature = () => {
       
       const candidatCreated = response.data;
       
-      // Créer une session locale si participation existe
-      if (candidatCreated.participation?.id) {
-        await apiService.createSession(candidatCreated.participation.id);
+      // Créer une session locale avec le nupcan
+      if (candidatCreated.nupcan) {
+        await apiService.createSession(candidatCreated.nupcan);
       }
       
       toast({
@@ -121,9 +126,8 @@ const Candidature = () => {
         description: `Votre candidature a été enregistrée avec succès`,
       });
       
-      // Utiliser le nupcan ou l'id pour la redirection
-      const numeroRedirection = candidatCreated.nupcan || candidatCreated.id;
-      navigate(`/confirmation/${numeroRedirection}`);
+      // Rediriger vers la page de confirmation avec le nupcan
+      navigate(`/confirmation/${candidatCreated.nupcan}`);
     },
     onError: (error) => {
       console.error('Error creating candidature:', error);
@@ -166,10 +170,6 @@ const Candidature = () => {
     createCandidatureMutation.mutate(candidat);
   };
 
-  function setPhoto(file: File) {
-    
-  }
-
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -190,12 +190,13 @@ const Candidature = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Champ NIP gabonais en premier */}
               <div className="p-4 bg-muted rounded-lg">
                 <Label htmlFor="nipcan" className="text-sm font-medium">
-                  NIP (Numéro d'Identification Personnel)
+                  NIP Gabonais (Numéro d'Identification Personnel)
                 </Label>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Si vous avez déjà un NIP gabonais, saisissez-le pour auto-remplir vos informations
+                  Si vous avez un NIP gabonais, saisissez-le pour auto-remplir vos informations
                 </p>
                 <div className="flex gap-2">
                   <Input
@@ -315,7 +316,7 @@ const Candidature = () => {
                   </Select>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <Label htmlFor="proaff">Province d'affectation souhaitée</Label>
                   <Select value={candidat.proaff} onValueChange={(value) => handleInputChange('proaff', value)}>
                     <SelectTrigger>
@@ -330,27 +331,13 @@ const Candidature = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div>
-                  <Label htmlFor="phtcan">Photo (fichier)</Label>
-                  <Input
-                      id="phtcan"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          const file = e.target.files[0];
-                          setPhoto(file); // à définir dans ton state
-                        }
-                      }}
-                  />
-                </div>
               </div>
 
               <div className="flex justify-end">
                 <Button 
                   type="submit"
                   disabled={createCandidatureMutation.isPending}
+                  className="bg-primary hover:bg-primary/90"
                 >
                   {createCandidatureMutation.isPending ? 'Création...' : 'Créer ma candidature'}
                 </Button>

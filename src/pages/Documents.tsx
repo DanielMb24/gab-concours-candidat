@@ -10,46 +10,57 @@ import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
-import { Document } from '@/types/entities';
+import { DocumentOption } from '@/types/entities';
 
 const Documents = () => {
   const { candidatureId } = useParams<{ candidatureId: string }>();
   const navigate = useNavigate();
   
   const [selectedDocumentType, setSelectedDocumentType] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedDocuments, setUploadedDocuments] = useState<{[key: string]: File}>({});
 
-  const documentTypes = [
+  const documentOptions: DocumentOption[] = [
     { value: 'cni', label: 'Carte Nationale d\'Identité', required: true },
-    { value: 'diplome', label: 'Diplôme', required: true },
+    { value: 'diplome', label: 'Diplôme ou Attestation', required: true },
     { value: 'photo', label: 'Photo d\'identité', required: true },
     { value: 'cv', label: 'Curriculum Vitae', required: false },
     { value: 'acte_naissance', label: 'Acte de naissance', required: true },
-    { value: 'certificat_residence', label: 'Certificat de résidence', required: false }
+    { value: 'certificat_residence', label: 'Certificat de résidence', required: false },
+    { value: 'releve_notes', label: 'Relevé de notes', required: false },
+    { value: 'certificat_travail', label: 'Certificat de travail', required: false }
   ];
 
-  // Simulation de documents pour éviter les erreurs d'API
-  const [documents, setDocuments] = useState<Document[]>([]);
-
-  // Mutation pour l'upload de documents
+  // Mutation pour l'upload de documents via l'API dossiers
   const uploadMutation = useMutation({
-    mutationFn: async ({ file, type }: { file: File; type: string }) => {
-      return apiService.uploadDocument(Number(candidatureId), file, type);
+    mutationFn: async ({ files, concoursId, nipcan }: { 
+      files: { [key: string]: File }; 
+      concoursId: string; 
+      nipcan: string; 
+    }) => {
+      const formData = new FormData();
+      formData.append('concours_id', concoursId);
+      formData.append('nipcan', nipcan);
+      
+      // Ajouter chaque fichier avec son type comme nom
+      Object.entries(files).forEach(([type, file]) => {
+        formData.append('documents', file, `${type}_${file.name}`);
+      });
+
+      return apiService.createDossier(formData);
     },
     onSuccess: (response) => {
       toast({
-        title: "Document uploadé !",
-        description: "Votre document a été envoyé avec succès",
+        title: "Documents uploadés !",
+        description: "Vos documents ont été envoyés avec succès",
       });
-      // Ajouter le document à la liste locale
-      setDocuments(prev => [...prev, response.data]);
-      setSelectedDocumentType('');
+      // Rediriger vers la page de paiement
+      navigate(`/paiement/${candidatureId}`);
     },
     onError: (error) => {
       console.error('Upload error:', error);
       toast({
         title: "Erreur d'upload",
-        description: "Une erreur est survenue lors de l'envoi du document",
+        description: "Une erreur est survenue lors de l'envoi des documents",
         variant: "destructive",
       });
     }
@@ -80,68 +91,82 @@ const Documents = () => {
       return;
     }
 
-    uploadMutation.mutate({ file, type: selectedDocumentType });
+    // Ajouter le fichier à la liste
+    setUploadedDocuments(prev => ({
+      ...prev,
+      [selectedDocumentType]: file
+    }));
+
+    toast({
+      title: "Document ajouté",
+      description: `${getDocumentLabel(selectedDocumentType)} ajouté avec succès`,
+    });
+
+    setSelectedDocumentType('');
   };
 
-  const removeDocument = async (documentId: number) => {
-    try {
-      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
-      toast({
-        title: "Document supprimé",
-        description: "Le document a été retiré de votre dossier",
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le document",
-        variant: "destructive",
-      });
-    }
+  const removeDocument = (documentType: string) => {
+    setUploadedDocuments(prev => {
+      const newDocs = { ...prev };
+      delete newDocs[documentType];
+      return newDocs;
+    });
+    
+    toast({
+      title: "Document supprimé",
+      description: "Le document a été retiré de votre dossier",
+    });
   };
 
   const handleContinuer = () => {
-    const requiredTypes = documentTypes.filter(dt => dt.required).map(dt => dt.value);
-    const uploadedTypes = documents.map(doc => doc.type).filter(Boolean);
+    const requiredTypes = documentOptions.filter(opt => opt.required).map(opt => opt.value);
+    const uploadedTypes = Object.keys(uploadedDocuments);
     const missingRequired = requiredTypes.filter(type => !uploadedTypes.includes(type));
 
     if (missingRequired.length > 0) {
+      const missingLabels = missingRequired.map(type => getDocumentLabel(type)).join(', ');
       toast({
         title: "Documents manquants",
-        description: "Veuillez uploader tous les documents obligatoires",
+        description: `Documents obligatoires manquants: ${missingLabels}`,
         variant: "destructive",
       });
       return;
     }
 
-    navigate(`/paiement/${candidatureId}`);
-  };
-
-  const getDocumentTypeLabel = (type: string) => {
-    return documentTypes.find(dt => dt.value === type)?.label || type;
-  };
-
-  const isDocumentTypeRequired = (type: string) => {
-    return documentTypes.find(dt => dt.value === type)?.required || false;
-  };
-
-  const getDocumentStatutIcon = (statut: string) => {
-    switch (statut) {
-      case 'valide':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'rejete':
-        return <X className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+    if (Object.keys(uploadedDocuments).length === 0) {
+      toast({
+        title: "Aucun document",
+        description: "Veuillez ajouter au moins un document",
+        variant: "destructive",
+      });
+      return;
     }
+
+    // Simuler le nipcan à partir du candidatureId pour l'API
+    const nipcan = candidatureId || 'temp_nip';
+    
+    uploadMutation.mutate({
+      files: uploadedDocuments,
+      concoursId: '1', // À adapter selon le contexte
+      nipcan: nipcan
+    });
   };
 
-  const availableDocumentTypes = documentTypes.filter(
-    dt => !documents.some(doc => doc.type === dt.value)
+  const getDocumentLabel = (type: string) => {
+    return documentOptions.find(opt => opt.value === type)?.label || type;
+  };
+
+  const isDocumentRequired = (type: string) => {
+    return documentOptions.find(opt => opt.value === type)?.required || false;
+  };
+
+  const availableDocumentTypes = documentOptions.filter(
+    opt => !uploadedDocuments[opt.value]
   );
 
-  const completionPercentage = Math.round(
-    (documents.length / documentTypes.filter(dt => dt.required).length) * 100
-  );
+  const requiredDocuments = documentOptions.filter(opt => opt.required);
+  const uploadedRequiredCount = requiredDocuments.filter(doc => uploadedDocuments[doc.value]).length;
+  const completionPercentage = Math.round((uploadedRequiredCount / requiredDocuments.length) * 100);
 
   return (
     <Layout>
@@ -164,14 +189,14 @@ const Documents = () => {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Documents requis uploadés</span>
-                <span>{Math.min(documents.length, documentTypes.filter(dt => dt.required).length)}/{documentTypes.filter(dt => dt.required).length}</span>
+                <span>{uploadedRequiredCount}/{requiredDocuments.length}</span>
               </div>
               <Progress value={completionPercentage} className="w-full" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Upload de nouveaux documents */}
+        {/* Sélection et upload de documents */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Ajouter vos documents</CardTitle>
@@ -184,9 +209,9 @@ const Documents = () => {
                     <SelectValue placeholder="Choisir le type de document" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableDocumentTypes.map(dt => (
-                      <SelectItem key={dt.value} value={dt.value}>
-                        {dt.label} {dt.required && '*'}
+                    {availableDocumentTypes.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label} {opt.required && <span className="text-red-500">*</span>}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -199,25 +224,23 @@ const Documents = () => {
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={handleFileSelect}
-                    disabled={!selectedDocumentType || uploadMutation.isPending}
+                    disabled={!selectedDocumentType}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                   />
                   <div className={`border-2 border-dashed rounded-lg p-4 text-center ${
-                    selectedDocumentType && !uploadMutation.isPending
+                    selectedDocumentType
                       ? 'border-primary bg-primary/5 hover:bg-primary/10' 
                       : 'border-gray-300 bg-gray-50'
                   } transition-colors`}>
                     <Upload className={`h-6 w-6 mx-auto mb-2 ${
-                      selectedDocumentType && !uploadMutation.isPending ? 'text-primary' : 'text-gray-400'
+                      selectedDocumentType ? 'text-primary' : 'text-gray-400'
                     }`} />
                     <p className={`text-sm ${
-                      selectedDocumentType && !uploadMutation.isPending ? 'text-primary' : 'text-gray-500'
+                      selectedDocumentType ? 'text-primary' : 'text-gray-500'
                     }`}>
-                      {uploadMutation.isPending
-                        ? 'Upload en cours...'
-                        : selectedDocumentType 
-                          ? 'Cliquez pour sélectionner un fichier' 
-                          : 'Sélectionnez d\'abord un type de document'
+                      {selectedDocumentType 
+                        ? 'Cliquez pour sélectionner un fichier' 
+                        : 'Sélectionnez d\'abord un type de document'
                       }
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -230,36 +253,36 @@ const Documents = () => {
           </CardContent>
         </Card>
 
-        {/* Documents uploadés */}
-        {documents.length > 0 && (
+        {/* Documents sélectionnés */}
+        {Object.keys(uploadedDocuments).length > 0 && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Documents uploadés ({documents.length})</CardTitle>
+              <CardTitle>Documents sélectionnés ({Object.keys(uploadedDocuments).length})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                {Object.entries(uploadedDocuments).map(([type, file]) => (
+                  <div key={type} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <FileText className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium">
-                          {getDocumentTypeLabel(doc.type || '')}
-                          {isDocumentTypeRequired(doc.type || '') && <span className="text-red-500 ml-1">*</span>}
+                          {getDocumentLabel(type)}
+                          {isDocumentRequired(type) && <span className="text-red-500 ml-1">*</span>}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {doc.nom_fichier || doc.nomdoc}
+                          {file.name}
                         </p>
                         <div className="flex items-center space-x-2 mt-1">
-                          {getDocumentStatutIcon(doc.statut || 'en_attente')}
-                          <span className="text-xs capitalize">{doc.statut || 'en_attente'}</span>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-xs text-green-600">Prêt à envoyer</span>
                         </div>
                       </div>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeDocument(doc.id)}
+                      onClick={() => removeDocument(type)}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -278,6 +301,7 @@ const Documents = () => {
           <CardContent>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>• Les documents marqués d'un astérisque (*) sont obligatoires</p>
+              <p>• Choisissez les documents selon les exigences du concours</p>
               <p>• Formats acceptés: PDF, JPEG, PNG</p>
               <p>• Taille maximale par fichier: 5MB</p>
               <p>• Assurez-vous que vos documents sont lisibles et de bonne qualité</p>
@@ -292,9 +316,9 @@ const Documents = () => {
           <Button 
             onClick={handleContinuer} 
             className="bg-primary hover:bg-primary/90"
-            disabled={completionPercentage < 100}
+            disabled={uploadMutation.isPending || completionPercentage < 100}
           >
-            Continuer vers le paiement
+            {uploadMutation.isPending ? 'Envoi en cours...' : 'Continuer vers le paiement'}
           </Button>
         </div>
       </div>

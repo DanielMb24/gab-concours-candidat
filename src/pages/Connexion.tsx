@@ -1,60 +1,73 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Search, LogIn } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { apiService } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const Connexion = () => {
   const navigate = useNavigate();
   const [numeroCandidature, setNumeroCandidature] = useState('');
+  const [searching, setSearching] = useState(false);
 
-  // Mutation pour rechercher une participation
-  const searchMutation = useMutation({
-    mutationFn: async (numero: string) => {
-      return apiService.getParticipationByNumero(numero);
-    },
-    onSuccess: (response) => {
-      const participation = response.data;
-      
-      // Créer une session pour cette participation
-      apiService.createSession(participation.id);
-      
+  const handleConnexion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!numeroCandidature.trim()) {
       toast({
-        title: "Candidature trouvée !",
-        description: `Bienvenue dans votre espace candidature`,
-      });
-      
-      // Rediriger selon le statut
-      const statut = participation.statut;
-      if (statut === 'inscrit') {
-        navigate(`/documents/${participation.id}`);
-      } else if (statut === 'paye') {
-        navigate(`/succes/${participation.id}`);
-      } else {
-        navigate(`/confirmation/${participation.numero_candidature}`);
-      }
-    },
-    onError: (error) => {
-      console.error('Search error:', error);
-      toast({
-        title: "Candidature non trouvée",
-        description: "Aucune candidature trouvée avec ce numéro",
+        title: "Numéro requis",
+        description: "Veuillez saisir votre numéro de candidature",
         variant: "destructive",
       });
+      return;
     }
-  });
 
-  const handleConnexion = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (numeroCandidature.trim()) {
-      searchMutation.mutate(numeroCandidature.trim());
+    setSearching(true);
+
+    try {
+      // Simuler une recherche (à adapter avec votre API)
+      setTimeout(() => {
+        // Vérifier le format du numéro de candidature
+        const candidaturePattern = /^GABCONCOURS\d{4}\/\d{2}\/\d{2}\/\d{3}$/;
+        
+        if (candidaturePattern.test(numeroCandidature.trim())) {
+          // Créer une session locale
+          localStorage.setItem('gabconcours_session', JSON.stringify({
+            sessionId: `session_${Date.now()}`,
+            candidatureId: numeroCandidature.trim(),
+            createdAt: new Date().toISOString()
+          }));
+          
+          toast({
+            title: "Candidature trouvée !",
+            description: "Connexion à votre espace candidature",
+          });
+          
+          // Rediriger vers la page de documents ou de statut
+          navigate(`/documents/${numeroCandidature.trim()}`);
+        } else {
+          toast({
+            title: "Candidature non trouvée",
+            description: "Aucune candidature trouvée avec ce numéro. Vérifiez le format: GABCONCOURS2024/01/25/001",
+            variant: "destructive",
+          });
+        }
+        
+        setSearching(false);
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Erreur de connexion",
+        description: "Une erreur est survenue lors de la recherche",
+        variant: "destructive",
+      });
+      setSearching(false);
     }
   };
 
@@ -88,23 +101,23 @@ const Connexion = () => {
                   type="text"
                   value={numeroCandidature}
                   onChange={(e) => setNumeroCandidature(e.target.value)}
-                  placeholder="Ex: CONC2024001"
+                  placeholder="GABCONCOURS2024/01/25/001"
                   className="mt-1"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Ce numéro vous a été fourni lors de votre inscription
+                  Format: GABCONCOURS suivi de la date et d'un numéro de séquence
                 </p>
               </div>
 
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90"
-                disabled={!numeroCandidature.trim() || searchMutation.isPending}
+                disabled={!numeroCandidature.trim() || searching}
               >
                 <div className="flex items-center space-x-2">
                   <Search className="h-4 w-4" />
                   <span>
-                    {searchMutation.isPending ? 'Recherche...' : 'Continuer ma candidature'}
+                    {searching ? 'Recherche...' : 'Continuer ma candidature'}
                   </span>
                 </div>
               </Button>
@@ -123,6 +136,18 @@ const Connexion = () => {
                   Voir les concours disponibles
                 </Button>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Aide */}
+        <Card className="mt-6">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2">Besoin d'aide ?</h3>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>• Votre numéro de candidature vous a été fourni après votre inscription</p>
+              <p>• Il suit le format: GABCONCOURS2024/01/25/001</p>
+              <p>• Contactez-nous si vous avez perdu votre numéro</p>
             </div>
           </CardContent>
         </Card>

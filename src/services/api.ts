@@ -16,8 +16,8 @@ import {
   Dossier
 } from '@/types/entities';
 
-// Utiliser le backend local
-const API_BASE_URL = 'http://localhost:3001/api';
+// Utiliser l'API externe
+const API_BASE_URL = 'https://gabcnc.labodev.link/api';
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -25,9 +25,9 @@ class ApiService {
     
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': 'Bearer 123',
+        'Content-Type': 'application/json',
         ...options?.headers,
       },
       ...options,
@@ -55,63 +55,10 @@ class ApiService {
     return this.request(`/concours/${id}`);
   }
 
-  async createConcours(data: Partial<Concours>): Promise<ApiResponse<Concours>> {
-    return this.request('/concours', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateConcours(id: number, data: Partial<Concours>): Promise<ApiResponse<Concours>> {
-    return this.request(`/concours/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteConcours(id: number): Promise<ApiResponse<void>> {
-    return this.request(`/concours/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Etablissement endpoints
-  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
-    return this.request('/etablissements');
-  }
-
-  async getEtablissementById(id: number): Promise<ApiResponse<Etablissement>> {
-    return this.request(`/etablissements/${id}`);
-  }
-
-  async createEtablissement(data: Partial<Etablissement>): Promise<ApiResponse<Etablissement>> {
-    return this.request('/etablissements', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateEtablissement(id: number, data: Partial<Etablissement>): Promise<ApiResponse<Etablissement>> {
-    return this.request(`/etablissements/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteEtablissement(id: number): Promise<ApiResponse<void>> {
-    return this.request(`/etablissements/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Candidat endpoints
-  async getAllCandidats(): Promise<ApiResponse<Candidat[]>> {
-    return this.request('/candidats');
-  }
-
+  // Candidat endpoints - adapter aux nouvelles spécifications
   async createCandidat(data: {
     niveau_id: number;
-    nipcan: string;
+    nipcan?: string;
     nomcan: string;
     prncan: string;
     maican: string;
@@ -129,27 +76,38 @@ class ApiService {
     });
   }
 
-  async getCandidatById(id: number): Promise<ApiResponse<Candidat>> {
-    return this.request(`/candidats/${id}`);
-  }
-
   async getCandidatByNip(nip: string): Promise<ApiResponse<Candidat>> {
     return this.request(`/candidats/nip/${nip}`);
   }
 
-  async updateCandidat(id: number, data: Partial<Candidat>): Promise<ApiResponse<Candidat>> {
-    return this.request(`/candidats/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  // Etudiant endpoints (pour l'inscription complète)
+  // Etudiant endpoints (pour l'inscription complète avec concours)
   async createEtudiant(data: FormData): Promise<ApiResponse<Candidat>> {
     return this.request('/etudiants', {
       method: 'POST',
       body: data,
       headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer 123',
+        // Ne pas définir Content-Type pour FormData
+      },
+    });
+  }
+
+  // Document endpoints
+  async createDocument(data: { nomdoc: string }): Promise<ApiResponse<Document>> {
+    return this.request('/documents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Dossier endpoints (upload de fichiers)
+  async createDossier(data: FormData): Promise<ApiResponse<Dossier[]>> {
+    return this.request('/dossiers', {
+      method: 'POST',
+      body: data,
+      headers: {
+        'Accept': 'application/json',
         'Authorization': 'Bearer 123',
       },
     });
@@ -167,69 +125,6 @@ class ApiService {
     });
   }
 
-  async getParticipationById(id: number): Promise<ApiResponse<Participation>> {
-    return this.request(`/participations/${id}`);
-  }
-
-  async getParticipationByNumero(numero: string): Promise<ApiResponse<Participation>> {
-    return this.request(`/participations/numero/${numero}`);
-  }
-
-  async getParticipationsByCandidatId(candidatId: number): Promise<ApiResponse<Participation[]>> {
-    return this.request(`/candidats/${candidatId}/participations`);
-  }
-
-  // Document endpoints
-  async createDocument(data: { nomdoc: string }): Promise<ApiResponse<Document>> {
-    return this.request('/documents', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async getDocumentsByParticipation(participationId: number): Promise<ApiResponse<Document[]>> {
-    return this.request(`/participations/${participationId}/documents`);
-  }
-
-  async uploadDocument(participationId: number, file: File, type: string): Promise<ApiResponse<Document>> {
-    const formData = new FormData();
-    formData.append('concours_id', '1');
-    formData.append('nipcan', 'temp');
-    formData.append('documents', file);
-    formData.append('type', type);
-
-    return this.request('/dossiers', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Authorization': 'Bearer 123',
-      },
-    }).then(response => {
-      return {
-        data: {
-          id: Date.now(),
-          nomdoc: file.name,
-          type: type,
-          nom_fichier: file.name,
-          statut: 'en_attente' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-      };
-    });
-  }
-
-  // Dossier endpoints
-  async createDossier(data: FormData): Promise<ApiResponse<Dossier[]>> {
-    return this.request('/dossiers', {
-      method: 'POST',
-      body: data,
-      headers: {
-        'Authorization': 'Bearer 123',
-      },
-    });
-  }
-
   // Paiement endpoints
   async createPaiement(data: {
     candidat_id: number;
@@ -239,16 +134,6 @@ class ApiService {
     return this.request('/payements', {
       method: 'POST',
       body: JSON.stringify(data),
-    });
-  }
-
-  async getPaiementByParticipation(participationId: number): Promise<ApiResponse<Paiement>> {
-    return this.request(`/participations/${participationId}/paiement`);
-  }
-
-  async validatePaiement(paiementId: number): Promise<ApiResponse<Paiement>> {
-    return this.request(`/paiements/${paiementId}/validate`, {
-      method: 'POST',
     });
   }
 
@@ -262,23 +147,18 @@ class ApiService {
     return this.request('/niveaux');
   }
 
-  // Statistics endpoints
-  async getStatistics(): Promise<ApiResponse<any>> {
-    return this.request('/statistics');
-  }
-
-  // Authentication/Session simulation
-  async createSession(participationId: number): Promise<{ sessionId: string; participationId: number }> {
-    const sessionId = `session_${Date.now()}_${participationId}`;
+  // Session simulation locale
+  async createSession(candidatureId: string): Promise<{ sessionId: string; candidatureId: string }> {
+    const sessionId = `session_${Date.now()}_${candidatureId}`;
     localStorage.setItem('gabconcours_session', JSON.stringify({
       sessionId,
-      participationId,
+      candidatureId,
       createdAt: new Date().toISOString()
     }));
-    return { sessionId, participationId };
+    return { sessionId, candidatureId };
   }
 
-  getSession(): { sessionId: string; participationId: number } | null {
+  getSession(): { sessionId: string; candidatureId: string } | null {
     const session = localStorage.getItem('gabconcours_session');
     return session ? JSON.parse(session) : null;
   }
