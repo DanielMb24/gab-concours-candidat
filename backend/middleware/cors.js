@@ -5,10 +5,18 @@ const corsOptions = {
   origin: [
     'http://localhost:5173',
     'http://localhost:3002',
+    'http://localhost:8080',
+    'http://localhost:8083',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3002',
+<<<<<<< HEAD
     'http://localhost:8088',
     'http://127.0.0.1:8088'
+=======
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:8083',
+    'https://id-preview--e0e8b858-0c39-41aa-b2fe-6de725816c56.lovable.app'
+>>>>>>> 236dc1917c20329ff0ca02502daa711b75a65162
   ],
   credentials: true,
   optionsSuccessStatus: 200,
