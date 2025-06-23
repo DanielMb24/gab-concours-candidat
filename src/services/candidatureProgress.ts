@@ -22,44 +22,26 @@ class CandidatureProgressService {
       dernierAcces: new Date().toISOString()
     };
     localStorage.setItem(this.getStorageKey(nupcan), JSON.stringify(data));
-    console.log('Progress saved for', nupcan, data);
   }
 
   // Récupérer la progression
   getProgress(nupcan: string): ProgressionStatus | null {
     const stored = localStorage.getItem(this.getStorageKey(nupcan));
-    if (!stored) {
-      console.log('No progress found for', nupcan);
-      return null;
-    }
+    if (!stored) return null;
     
     try {
-      const progress = JSON.parse(stored);
-      console.log('Progress retrieved for', nupcan, progress);
-      return progress;
-    } catch (error) {
-      console.error('Error parsing progress for', nupcan, error);
+      return JSON.parse(stored);
+    } catch {
       return null;
     }
   }
 
   // Marquer une étape comme complète
   markStepComplete(nupcan: string, etape: EtapeType): void {
-    let current = this.getProgress(nupcan);
-    if (!current) {
-      current = this.createInitialProgress();
-    }
+    const current = this.getProgress(nupcan) || this.createInitialProgress();
     
     if (!current.etapesCompletes.includes(etape)) {
       current.etapesCompletes.push(etape);
-    }
-    
-    // Mettre à jour les flags spécifiques
-    if (etape === 'documents') {
-      current.documentsUploads = true;
-    }
-    if (etape === 'paiement') {
-      current.paiementEffectue = true;
     }
     
     // Déterminer la prochaine étape
@@ -108,14 +90,6 @@ class CandidatureProgressService {
     const totalSteps = 3; // inscription, documents, paiement
     const completedSteps = progress.etapesCompletes.length;
     return Math.round((completedSteps / totalSteps) * 100);
-  }
-
-  // Initialiser la progression après inscription
-  initializeProgressAfterInscription(nupcan: string): void {
-    const progress = this.createInitialProgress();
-    progress.etapesCompletes = ['inscription'];
-    progress.etapeActuelle = 'documents';
-    this.saveProgress(nupcan, progress);
   }
 }
 
