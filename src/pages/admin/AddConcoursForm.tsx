@@ -33,21 +33,10 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
         formState: { errors, isSubmitting },
     } = useForm<ConcoursFormData>({
         resolver: zodResolver(concoursSchema),
-        defaultValues: {
-            libcnc: '',
-            sescnc: '',
-            debcnc: '',
-            fincnc: '',
-            fracnc: '',
-            etablissement_id: '',
-            stacnc: ''
-        }
     });
 
     const mutation = useMutation({
-        mutationFn: (data: ConcoursFormData) => {
-            return apiService.createConcours(data);
-        },
+        mutationFn: (data: ConcoursFormData) => apiService.createConcours(data),
         onSuccess: () => {
             toast({
                 title: 'Concours ajouté',

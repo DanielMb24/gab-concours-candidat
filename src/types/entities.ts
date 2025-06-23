@@ -1,8 +1,6 @@
 // Types pour toutes les entités du système selon l'API gabcnc.labodev.link
 
 export interface Candidat {
-  [x: string]: number;
-  participations: Candidat;
   id: number;
   niveau_id: number;
   niveau_nomniv?: string;
@@ -20,9 +18,6 @@ export interface Candidat {
   ldncan: string;
   created_at: string;
   updated_at: string;
-  // Propriétés additionnelles pour l'admin
-  participations_count?: number;
-  statut?: string;
 }
 
 export interface Concours {

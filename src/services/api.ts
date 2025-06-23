@@ -18,17 +18,7 @@ import {
 // Utiliser le backend local
 const API_BASE_URL = 'http://localhost:3002/api';
 
-interface ConcoursFormData {
-  libcnc: string;
-  sescnc: string;
-  debcnc: string;
-  fincnc: string;
-  fracnc: string;
-  etablissement_id: string;
-  stacnc: string;
-  niveau_id?: string;
-  agecnc?: string;
-  etddos?: string;
+class ConcoursFormData {
 }
 
 class ApiService {
@@ -75,13 +65,6 @@ class ApiService {
     return this.request(`/concours/${id}`);
   }
 
-  async createConcours(data: ConcoursFormData): Promise<ApiResponse<Concours>> {
-    return this.request('/concours', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
   async deleteConcours(id: number): Promise<ApiResponse<any>> {
     return this.request(`/concours/${id}`, {
       method: 'DELETE',
@@ -89,10 +72,6 @@ class ApiService {
   }
 
   // Candidat endpoints
-  async getCandidats(): Promise<ApiResponse<Candidat[]>> {
-    return this.request('/candidats');
-  }
-
   async createCandidat(data: {
     niveau_id: number;
     nipcan?: string;
@@ -170,20 +149,6 @@ class ApiService {
     });
   }
 
-  async getPaiementsByCandidat(candidatId: number): Promise<ApiResponse<Paiement[]>> {
-    return this.request(`/paiements/candidat/${candidatId}`);
-  }
-
-  async getPaiements(): Promise<ApiResponse<Paiement[]>> {
-    return this.request('/paiements');
-  }
-
-  async validatePaiement(paiementId: number): Promise<ApiResponse<Paiement>> {
-    return this.request(`/paiements/${paiementId}/validate`, {
-      method: 'POST',
-    });
-  }
-
   // Province endpoints
   async getProvinces(): Promise<ApiResponse<Province[]>> {
     return this.request('/provinces');
@@ -247,6 +212,10 @@ class ApiService {
 
   clearSession(): void {
     localStorage.removeItem('gabconcours_session');
+  }
+
+  createConcours(data: ConcoursFormData) {
+
   }
 }
 

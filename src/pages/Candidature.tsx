@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -10,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
-import { candidatureProgressService } from '@/services/candidatureProgress';
 
 const Candidature = () => {
   const { concoursId } = useParams<{ concoursId: string }>();
@@ -71,7 +69,7 @@ const Candidature = () => {
     onError: () => {
       toast({
         title: "NIP non trouvé",
-        description: "Aucun candidat trouvé avec ce NIP gabonais. Vous pouvez continuer manuellement.",
+        description: "Aucun candidat trouvé avec ce NIP gabonais",
         variant: "destructive",
       });
     },
@@ -111,28 +109,23 @@ const Candidature = () => {
       formData.append('proact', candidatData.proact || candidatData.proorg);
       formData.append('proaff', candidatData.proaff || candidatData.proorg);
       formData.append('concours_id', concoursId || '');
+      console.log('FormData entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       return apiService.createEtudiant(formData);
     },
     onSuccess: async (response) => {
       console.log('Candidature created successfully:', response);
       const candidatCreated = response.data;
-      
       if (candidatCreated.nupcan) {
-        // Créer la session
         await apiService.createSession(candidatCreated.nupcan);
-        
-        // Initialiser la progression et marquer l'inscription comme terminée
-        const progressionInitiale = candidatureProgressService.createInitialProgress();
-        candidatureProgressService.saveProgress(candidatCreated.nupcan, progressionInitiale);
-        candidatureProgressService.markStepComplete(candidatCreated.nupcan, 'inscription');
       }
-      
       toast({
-        title: "Candidature créée avec succès !",
-        description: `Votre numéro de candidature: ${candidatCreated.nupcan}`,
+        title: "Candidature a bien commencé !",
+        description: `Votre candidature a été enregistrée avec succès. Numéro: ${candidatCreated.nupcan}`,
       });
-      
       console.log('Redirecting to:', `/confirmation/${encodeURIComponent(candidatCreated.nupcan)}`);
       navigate(`/confirmation/${encodeURIComponent(candidatCreated.nupcan)}`);
     },
@@ -191,20 +184,6 @@ const Candidature = () => {
       return;
     }
 
-    // Validation de la date de naissance (au moins 16 ans)
-    const birthDate = new Date(candidat.dtncan);
-    const minAge = new Date();
-    minAge.setFullYear(minAge.getFullYear() - 16);
-    
-    if (birthDate > minAge) {
-      toast({
-        title: "Âge minimum requis",
-        description: "Vous devez avoir au moins 16 ans pour candidater",
-        variant: "destructive",
-      });
-      return;
-    }
-
     createCandidatureMutation.mutate(candidat);
   };
 
@@ -216,17 +195,9 @@ const Candidature = () => {
               Formulaire de Candidature
             </h1>
             {concours && (
-                <div className="bg-primary/10 p-4 rounded-lg">
-                  <p className="text-lg font-semibold text-primary">
-                    {concours.libcnc}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {concours.etablissement_nomets} - Session {concours.sescnc}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Frais: {concours.fracnc} FCFA
-                  </p>
-                </div>
+                <p className="text-muted-foreground">
+                  Concours: {concours.libcnc} - {concours.etablissement_nomets}
+                </p>
             )}
           </div>
 
@@ -239,7 +210,7 @@ const Candidature = () => {
                 {/* Champ NIP gabonais en premier */}
                 <div className="p-4 bg-muted rounded-lg">
                   <Label htmlFor="nipcan" className="text-sm font-medium">
-                    NIP Gabonais (Numéro d'Identification Personnel) - Optionnel
+                    NIP Gabonais (Numéro d'Identification Personnel)
                   </Label>
                   <p className="text-xs text-muted-foreground mb-3">
                     Si vous avez un NIP gabonais, saisissez-le pour auto-remplir vos informations
@@ -250,7 +221,6 @@ const Candidature = () => {
                         placeholder="Ex: 1234567890123"
                         value={candidat.nipcan}
                         onChange={(e) => handleInputChange('nipcan', e.target.value)}
-                        maxLength={13}
                     />
                     <Button
                         type="button"
@@ -276,126 +246,126 @@ const Candidature = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="nomcan">Nom *</Label>
-                    <Input
-                        id="nomcan"
-                        value={candidat.nomcan}
-                        onChange={(e) => handleInputChange('nomcan', e.target.value)}
-                        placeholder="Votre nom"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dtncan">Date de naissance *</Label>
-                    <Input
-                        id="dtncan"
-                        type="date"
-                        value={candidat.dtncan}
-                        onChange={(e) => handleInputChange('dtncan', e.target.value)}
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="ldncan">Lieu de naissance *</Label>
-                    <Input
-                        id="ldncan"
-                        value={candidat.ldncan}
-                        onChange={(e) => handleInputChange('ldncan', e.target.value)}
-                        placeholder="Votre lieu de naissance"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="telcan">Téléphone *</Label>
-                    <Input
-                        id="telcan"
-                        value={candidat.telcan}
-                        onChange={(e) => handleInputChange('telcan', e.target.value)}
-                        placeholder="+241 XX XX XX XX"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="maican">Email *</Label>
-                    <Input
-                        id="maican"
-                        type="email"
-                        value={candidat.maican}
-                        onChange={(e) => handleInputChange('maican', e.target.value)}
-                        placeholder="votre@email.com"
-                        required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="proorg">Province d'origine *</Label>
-                    <Select value={candidat.proorg} onValueChange={(value) => handleInputChange('proorg', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir votre province d'origine" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map(province => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.nompro}
-                            </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="proact">Province actuelle</Label>
-                    <Select value={candidat.proact} onValueChange={(value) => handleInputChange('proact', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir votre province actuelle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map(province => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.nompro}
-                            </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <Label htmlFor="proaff">Province d'affectation souhaitée</Label>
-                    <Select value={candidat.proaff} onValueChange={(value) => handleInputChange('proaff', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir votre province d'affectation" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map(province => (
-                            <SelectItem key={province.id} value={province.id.toString()}>
-                              {province.nompro}
-                            </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <Label htmlFor="nomcan">Nom *
+                  </Label>
+                  <Input
+                      id="nomcan"
+                      value={candidat.nomcan}
+                      onChange={(e) => handleInputChange('nomcan', e.target.value)}
+                      placeholder="Votre nom"
+                      required
+                  />
                 </div>
 
-                <div className="flex justify-end">
-                  <Button
-                      type="submit"
-                      disabled={createCandidatureMutation.isPending}
-                      className="bg-primary hover:bg-primary/90"
-                      size="lg"
-                  >
-                    {createCandidatureMutation.isPending ? 'Création...' : 'Créer ma candidature'}
-                  </Button>
+                <div>
+                  <Label htmlFor="dtncan">Date de naissance *</Label>
+                  <Input
+                      id="dtncan"
+                      type="date"
+                      value={candidat.dtncan}
+                      onChange={(e) => handleInputChange('dtncan', e.target.value)}
+                      required
+                  />
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+
+                <div>
+                  <Label htmlFor="ldncan">Lieu de naissance *</Label>
+                  <Input
+                      id="ldncan"
+                      value={candidat.ldncan}
+                      onChange={(e) => handleInputChange('ldncan', e.target.value)}
+                      placeholder="Votre lieu de naissance"
+                      required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="telcan">Téléphone *</Label>
+                  <Input
+                      id="telcan"
+                      value={candidat.telcan}
+                      onChange={(e) => handleInputChange('telcan', e.target.value)}
+                      placeholder="+241 XX XX XX XX"
+                      required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="maican">Email *</Label>
+                  <Input
+                      id="maican"
+                      type="email"
+                      value={candidat.maican}
+                      onChange={(e) => handleInputChange('maican', e.target.value)}
+                      placeholder="votre@email.com"
+                      required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="proorg">Province d'origine *</Label>
+                  <Select value={candidat.proorg} onValueChange={(value) => handleInputChange('proorg', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province d'origine" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.nompro}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="proact">Province actuelle</Label>
+                  <Select value={candidat.proact} onValueChange={(value) => handleInputChange('proact', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province actuelle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.nompro}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="proaff">Province d'affectation souhaitée</Label>
+                  <Select value={candidat.proaff} onValueChange={(value) => handleInputChange('proaff', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir votre province d'affectation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map(province => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.nompro}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
         </div>
-      </Layout>
-  );
+
+        <div className="flex justify-end">
+          <Button
+              type="submit"
+              disabled={createCandidatureMutation.isPending}
+              className="bg-primary hover:bg-primary/90"
+          >
+            {createCandidatureMutation.isPending ? 'Création...' : 'Créer ma candidature'}
+          </Button>
+        </div>
+      </form>
+</CardContent>
+</Card>
+</div>
+</Layout>
+);
 };
 
 export default Candidature;

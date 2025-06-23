@@ -22,28 +22,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /api/paiements/candidat/:candidat_id - Récupérer les paiements d'un candidat
-router.get('/candidat/:candidat_id', async (req, res) => {
-  try {
-    const { getConnection } = require('../config/database');
-    const connection = getConnection();
-    
-    const [rows] = await connection.execute(
-      'SELECT * FROM paiements WHERE candidat_id = ? ORDER BY created_at DESC',
-      [req.params.candidat_id]
-    );
-    
-    res.json({ data: rows });
-  } catch (error) {
-    console.error('Erreur lors de la récupération des paiements:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Erreur serveur', 
-      errors: [error.message] 
-    });
-  }
-});
-
 // GET /api/participations/:id/paiement - Récupérer le paiement d'une participation
 router.get('/participations/:id/paiement', async (req, res) => {
   try {
@@ -76,30 +54,6 @@ router.post('/:id/validate', async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur lors de la validation du paiement:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Erreur serveur', 
-      errors: [error.message] 
-    });
-  }
-});
-
-// GET /api/paiements - Récupérer tous les paiements (pour l'admin)
-router.get('/', async (req, res) => {
-  try {
-    const { getConnection } = require('../config/database');
-    const connection = getConnection();
-    
-    const [rows] = await connection.execute(
-      `SELECT p.*, c.nomcan, c.prncan, c.nupcan
-       FROM paiements p
-       LEFT JOIN candidats c ON p.candidat_id = c.id
-       ORDER BY p.created_at DESC`
-    );
-    
-    res.json({ data: rows });
-  } catch (error) {
-    console.error('Erreur lors de la récupération des paiements:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Erreur serveur', 

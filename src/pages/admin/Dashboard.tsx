@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,11 +15,6 @@ const Dashboard = () => {
     queryFn: () => apiService.getConcours(),
   });
 
-  const { data: candidatsData } = useQuery({
-    queryKey: ['admin-candidats'],
-    queryFn: () => apiService.getCandidats(),
-  });
-
   const { data: etablissementsData } = useQuery({
     queryKey: ['admin-etablissements'],
     queryFn: () => apiService.getEtablissements(),
@@ -29,24 +25,10 @@ const Dashboard = () => {
     queryFn: () => apiService.getStatistics(),
   });
 
-  const concours = concoursData?.data || [];
-  const candidats = candidatsData?.data || [];
-  const etablissements = etablissementsData?.data || [];
-  const stats = statisticsData?.data || {
-    candidats: 0,
-    concours: 0,
-    etablissements: 0,
-    participations: 0,
-    paiements: 0
-  };
-
-  const concoursActifs = concours.filter(c => c.stacnc === '1').length;
-  const candidatsActifs = candidats.filter(c => (c.statut || 'actif') !== 'inactif').length;
-
-  const dashboardStats = [
+  const stats = [
     {
       title: "Concours Actifs",
-      value: concoursActifs,
+      value: concoursData?.data?.length || 0,
       icon: Trophy,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
@@ -54,7 +36,7 @@ const Dashboard = () => {
     },
     {
       title: "Candidats",
-      value: stats.candidats,
+      value: statisticsData?.data?.candidats || 0,
       icon: Users,
       color: "text-green-600",
       bgColor: "bg-green-100",
@@ -62,7 +44,7 @@ const Dashboard = () => {
     },
     {
       title: "Établissements",
-      value: stats.etablissements,
+      value: etablissementsData?.data?.length || 0,
       icon: Building,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
@@ -70,7 +52,7 @@ const Dashboard = () => {
     },
     {
       title: "Participations",
-      value: stats.participations,
+      value: statisticsData?.data?.participations || 0,
       icon: FileText,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
@@ -78,24 +60,21 @@ const Dashboard = () => {
     },
     {
       title: "Sessions actives",
-      value: candidatsActifs,
+      value: "12", // Mock data
       icon: Calendar,
       color: "text-red-600",
       bgColor: "bg-red-100",
-      link: "/admin/candidats"
+      link: "/admin/sessions"
     },
     {
-      title: "Paiements",
-      value: stats.paiements,
+      title: "Revenus totaux",
+      value: "15,450,000 FCFA", // Mock data
       icon: DollarSign,
       color: "text-indigo-600",
       bgColor: "bg-indigo-100",
       link: "/admin/paiements"
     }
   ];
-
-  // Récupérer les 5 derniers candidats pour l'activité récente
-  const candidatsRecents = candidats.slice(0, 5);
 
   return (
     <AdminProtectedRoute>
@@ -107,7 +86,7 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dashboardStats.map((stat, index) => (
+            {stats.map((stat, index) => (
               <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -134,26 +113,39 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5" />
-                  <span>Candidats Récents</span>
+                  <span>Activité Récente</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {candidatsRecents.length > 0 ? candidatsRecents.map((candidat) => (
-                    <div key={candidat.id} className="flex items-center space-x-4">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{candidat.prncan} {candidat.nomcan}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {candidat.nupcan} - {new Date(candidat.created_at || Date.now()).toLocaleDateString()}
-                        </p>
-                      </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Nouveau concours créé</p>
+                      <p className="text-xs text-muted-foreground">École Nationale d'Administration - il y a 2h</p>
                     </div>
-                  )) : (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-muted-foreground">Aucun candidat récent</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{statisticsData?.data?.candidats || 0} nouvelles candidatures</p>
+                      <p className="text-xs text-muted-foreground">Concours ENS - il y a 4h</p>
                     </div>
-                  )}
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Dossiers en attente de validation</p>
+                      <p className="text-xs text-muted-foreground">25 dossiers - il y a 6h</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Nouveau établissement ajouté</p>
+                      <p className="text-xs text-muted-foreground">Institut Supérieur de Technologie - il y a 1j</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -165,22 +157,22 @@ const Dashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <Button asChild>
-                    <Link to="/admin/concours">Gérer concours</Link>
+                    <Link to="/admin/concours/nouveau">Créer un concours</Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link to="/admin/etablissements">Gérer établissements</Link>
+                    <Link to="/admin/etablissements/nouveau">Ajouter établissement</Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link to="/admin/dossiers">Valider dossiers</Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link to="/admin/candidats">Voir candidats</Link>
+                    <Link to="/admin/rapports">Générer rapport</Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link to="/admin/paiements">Voir paiements</Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link to="/concours">Site public</Link>
+                    <Link to="/admin/candidats">Gérer candidats</Link>
                   </Button>
                 </div>
               </CardContent>
