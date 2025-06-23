@@ -29,14 +29,14 @@ const Paiement = () => {
 
   const candidat = candidatResponse?.data;
 
-  // Récupérer un éventuel paiement existant
+  // Récupérer les paiements existants
   const { data: paiementResponse } = useQuery({
     queryKey: ['paiement', candidat?.id],
-    queryFn: () => apiService.getCandidatByNupcan(candidatureId!), // Pour l'instant pas d'API spécifique
+    queryFn: () => apiService.getPaiementsByCandidat(candidat!.id),
     enabled: !!candidat?.id,
   });
 
-  const paiementExistant = null; // À implémenter avec l'API
+  const paiementExistant = paiementResponse?.data?.[0];
 
   // Mutation pour créer un paiement
   const createPaiementMutation = useMutation({
@@ -141,10 +141,10 @@ const Paiement = () => {
                     Numéro: {candidatureId}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Concours: {candidat.participations[0]?.libcnc}
+                    Concours: {candidat.participations[0]?.libcnc || 'Non spécifié'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Établissement: {candidat.participations[0]?.nomets}
+                    Établissement: {candidat.participations[0]?.nomets || 'Non spécifié'}
                   </p>
                 </div>
               )}
@@ -169,10 +169,10 @@ const Paiement = () => {
             <CardContent>
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <p className="text-yellow-800">
-                  Un paiement de {(paiementExistant.montant || 50000).toLocaleString()} FCFA est déjà en cours de traitement.
+                  Un paiement de {(parseInt(paiementExistant.mntfrai) || 50000).toLocaleString()} FCFA est déjà en cours de traitement.
                 </p>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Référence: {paiementExistant.reference || 'REF_' + Date.now()}
+                  Référence: REF_{paiementExistant.id}
                 </p>
               </div>
             </CardContent>
