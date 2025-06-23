@@ -171,6 +171,20 @@ class ApiService {
     });
   }
 
+  async getPaiementsByCandidat(candidatId: number): Promise<ApiResponse<Paiement[]>> {
+    return this.request(`/paiements/candidat/${candidatId}`);
+  }
+
+  async getPaiements(): Promise<ApiResponse<Paiement[]>> {
+    return this.request('/paiements');
+  }
+
+  async validatePaiement(paiementId: number): Promise<ApiResponse<Paiement>> {
+    return this.request(`/paiements/${paiementId}/validate`, {
+      method: 'POST',
+    });
+  }
+
   // Province endpoints
   async getProvinces(): Promise<ApiResponse<Province[]>> {
     return this.request('/provinces');
