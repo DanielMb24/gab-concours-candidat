@@ -13,7 +13,7 @@ import { candidatureProgressService } from '@/services/candidatureProgress';
 import { toast } from '@/hooks/use-toast';
 
 const Documents = () => {
-  const { candidatureId } = useParams<{ candidatureId: string }>();
+  const { nupcan } = useParams<{ nupcan: string }>();
   const navigate = useNavigate();
   
   const [files, setFiles] = useState<Record<string, File>>({});
@@ -39,12 +39,12 @@ const Documents = () => {
       });
       
       // Marquer l'étape documents comme complète
-      if (candidatureId) {
-        candidatureProgressService.markStepComplete(candidatureId, 'documents');
+      if (nupcan) {
+        candidatureProgressService.markStepComplete(nupcan, 'documents');
       }
       
       // Rediriger vers le paiement
-      navigate(`/paiement/${candidatureId}`);
+      navigate(`/paiement/${nupcan}`);
     },
     onError: (error) => {
       console.error('Upload error:', error);
@@ -86,7 +86,7 @@ const Documents = () => {
     }
 
     const formData = new FormData();
-    formData.append('candidat_id', candidatureId || '1');
+    formData.append('candidat_id', nupcan || '1');
     
     Object.entries(files).forEach(([documentId, file]) => {
       formData.append('documents', file);
@@ -112,7 +112,7 @@ const Documents = () => {
             Upload des Documents
           </h1>
           <p className="text-muted-foreground">
-            Candidature: {candidatureId}
+            Candidature: {nupcan}
           </p>
         </div>
 
@@ -185,7 +185,7 @@ const Documents = () => {
         </Card>
 
         <div className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate(`/statut/${candidatureId}`)}>
+          <Button variant="outline" onClick={() => navigate(`/statut/${nupcan}`)}>
             Retour au statut
           </Button>
           <Button 

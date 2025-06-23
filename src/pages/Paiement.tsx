@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -13,7 +12,7 @@ import { candidatureProgressService } from '@/services/candidatureProgress';
 import { toast } from '@/hooks/use-toast';
 
 const Paiement = () => {
-  const { candidatureId } = useParams<{ candidatureId: string }>();
+  const { nupcan } = useParams<{ nupcan: string }>();
   const navigate = useNavigate();
   
   const [methodePaiement, setMethodePaiement] = useState<'airtel' | 'moov' | 'virement'>('airtel');
@@ -22,9 +21,9 @@ const Paiement = () => {
 
   // Récupérer les informations du candidat
   const { data: candidatResponse } = useQuery({
-    queryKey: ['candidat-nupcan', candidatureId],
-    queryFn: () => apiService.getCandidatByNupcan(candidatureId!),
-    enabled: !!candidatureId,
+    queryKey: ['candidat-nupcan', nupcan],
+    queryFn: () => apiService.getCandidatByNupcan(nupcan!),
+    enabled: !!nupcan,
   });
 
   const candidat = candidatResponse?.data;
@@ -62,13 +61,13 @@ const Paiement = () => {
       });
       
       // Marquer l'étape paiement comme complète
-      if (candidatureId) {
-        candidatureProgressService.markStepComplete(candidatureId, 'paiement');
+      if (nupcan) {
+        candidatureProgressService.markStepComplete(nupcan, 'paiement');
       }
       
       // Simuler la validation automatique après quelques secondes
       setTimeout(() => {
-        navigate(`/succes/${candidatureId}`);
+        navigate(`/succes/${nupcan}`);
       }, 2000);
     },
     onError: (error) => {
@@ -106,7 +105,7 @@ const Paiement = () => {
 
   // Si un paiement est déjà validé, rediriger vers succès
   if (paiementExistant && paiementExistant.statut === 'valide') {
-    navigate(`/succes/${candidatureId}`);
+    navigate(`/succes/${nupcan}`);
     return null;
   }
 
@@ -118,7 +117,7 @@ const Paiement = () => {
             Paiement des Frais d'Inscription
           </h1>
           <p className="text-muted-foreground">
-            Candidature: {candidatureId}
+            Candidature: {nupcan}
           </p>
           {candidat && (
             <p className="text-sm text-muted-foreground mt-2">
@@ -138,7 +137,7 @@ const Paiement = () => {
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <h4 className="font-medium mb-2">Détails de la candidature</h4>
                   <p className="text-sm text-muted-foreground">
-                    Numéro: {candidatureId}
+                    Numéro: {nupcan}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Concours: {candidat.participations[0]?.libcnc || 'Non spécifié'}
@@ -273,7 +272,7 @@ const Paiement = () => {
 
         {/* Actions */}
         <div className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate(`/documents/${candidatureId}`)}>
+          <Button variant="outline" onClick={() => navigate(`/documents/${nupcan}`)}>
             Retour aux documents
           </Button>
           
@@ -289,7 +288,7 @@ const Paiement = () => {
           
           {paiementExistant && (
             <Button 
-              onClick={() => navigate(`/succes/${candidatureId}`)}
+              onClick={() => navigate(`/succes/${nupcan}`)}
               className="bg-primary hover:bg-primary/90"
             >
               Voir le statut
