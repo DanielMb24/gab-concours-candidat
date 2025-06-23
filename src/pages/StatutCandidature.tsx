@@ -81,25 +81,25 @@ const StatutCandidature = () => {
 
   const etapes = [
     {
-      id: 'inscription' as const,
+      id: 'inscription' as EtapeType,
       nom: 'Inscription',
-      statut: 'termine' as const,
+      statut: 'termine',
       icone: User,
       description: 'Informations personnelles enregistrées'
     },
     {
-      id: 'documents' as const,
+      id: 'documents' as EtapeType,
       nom: 'Documents',
-      statut: (etapeActuelle === 'documents' ? 'en-cours' : 
-               (etapeActuelle === 'paiement' || etapeActuelle === 'termine' ? 'termine' : 'attente')) as const,
+      statut: etapeActuelle === 'documents' ? 'en-cours' : 
+               (etapeActuelle === 'paiement' || etapeActuelle === 'termine' ? 'termine' : 'attente'),
       icone: FileText,
       description: 'Upload des documents requis'
     },
     {
-      id: 'paiement' as const,
+      id: 'paiement' as EtapeType,
       nom: 'Paiement',
-      statut: (etapeActuelle === 'paiement' ? 'en-cours' : 
-               (etapeActuelle === 'termine' ? 'termine' : 'attente')) as const,
+      statut: etapeActuelle === 'paiement' ? 'en-cours' : 
+               (etapeActuelle === 'termine' ? 'termine' : 'attente'),
       icone: CreditCard,
       description: 'Paiement des frais de candidature'
     }
