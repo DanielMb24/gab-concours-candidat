@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Smartphone, CreditCard, CheckCircle } from 'lucide-react';
+import { Smartphone, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
+import { candidatureProgressService } from '@/services/candidatureProgress';
 import { toast } from '@/hooks/use-toast';
 
 const Paiement = () => {
@@ -19,20 +20,23 @@ const Paiement = () => {
   const [numeroTelephone, setNumeroTelephone] = useState('');
   const [processing, setProcessing] = useState(false);
 
-  // Simulation de participation et paiement
-  const simulatedParticipation = {
-    id: Number(candidatureId) || 1,
-    candidat_id: 1,
-    concours_id: 1,
-    stspar: 1,
-    numero_candidature: `CONC2024${candidatureId}`,
-    statut: 'inscrit' as const,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
+  // Récupérer les informations du candidat
+  const { data: candidatResponse } = useQuery({
+    queryKey: ['candidat-nupcan', candidatureId],
+    queryFn: () => apiService.getCandidatByNupcan(candidatureId!),
+    enabled: !!candidatureId,
+  });
 
-  const participation = simulatedParticipation;
-  const paiementExistant = null; // Pas de paiement existant pour l'instant
+  const candidat = candidatResponse?.data;
+
+  // Récupérer un éventuel paiement existant
+  const { data: paiementResponse } = useQuery({
+    queryKey: ['paiement', candidat?.id],
+    queryFn: () => apiService.getCandidatByNupcan(candidatureId!), // Pour l'instant pas d'API spécifique
+    enabled: !!candidat?.id,
+  });
+
+  const paiementExistant = null; // À implémenter avec l'API
 
   // Mutation pour créer un paiement
   const createPaiementMutation = useMutation({
@@ -41,8 +45,12 @@ const Paiement = () => {
       numeroTelephone: string;
       montant: number;
     }) => {
+      if (!candidat?.id) {
+        throw new Error('Candidat non trouvé');
+      }
+
       return apiService.createPaiement({
-        candidat_id: participation.candidat_id,
+        candidat_id: candidat.id,
         mntfrai: paiementData.montant.toString(),
         datfrai: new Date().toISOString(),
       });
@@ -52,6 +60,11 @@ const Paiement = () => {
         title: "Paiement initié !",
         description: "Votre paiement a été enregistré et est en cours de traitement",
       });
+      
+      // Marquer l'étape paiement comme complète
+      if (candidatureId) {
+        candidatureProgressService.markStepComplete(candidatureId, 'paiement');
+      }
       
       // Simuler la validation automatique après quelques secondes
       setTimeout(() => {
@@ -107,6 +120,11 @@ const Paiement = () => {
           <p className="text-muted-foreground">
             Candidature: {candidatureId}
           </p>
+          {candidat && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Candidat: {candidat.prncan} {candidat.nomcan}
+            </p>
+          )}
         </div>
 
         {/* Récapitulatif */}
@@ -116,14 +134,17 @@ const Paiement = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {participation && (
+              {candidat && candidat.participations && candidat.participations.length > 0 && (
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <h4 className="font-medium mb-2">Détails de la candidature</h4>
                   <p className="text-sm text-muted-foreground">
-                    Numéro: {participation.numero_candidature}
+                    Numéro: {candidatureId}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Statut: {participation.statut}
+                    Concours: {candidat.participations[0]?.libcnc}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Établissement: {candidat.participations[0]?.nomets}
                   </p>
                 </div>
               )}
