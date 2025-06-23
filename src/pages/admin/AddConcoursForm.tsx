@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -33,10 +34,31 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
         formState: { errors, isSubmitting },
     } = useForm<ConcoursFormData>({
         resolver: zodResolver(concoursSchema),
+        defaultValues: {
+            libcnc: '',
+            sescnc: '',
+            debcnc: '',
+            fincnc: '',
+            fracnc: '',
+            etablissement_id: '',
+            stacnc: ''
+        }
     });
 
     const mutation = useMutation({
-        mutationFn: (data: ConcoursFormData) => apiService.createConcours(data),
+        mutationFn: (data: ConcoursFormData) => {
+            // S'assurer que toutes les propriétés sont présentes et de type string
+            const formattedData: ConcoursFormData = {
+                libcnc: data.libcnc,
+                sescnc: data.sescnc,
+                debcnc: data.debcnc,
+                fincnc: data.fincnc,
+                fracnc: data.fracnc,
+                etablissement_id: data.etablissement_id,
+                stacnc: data.stacnc,
+            };
+            return apiService.createConcours(formattedData);
+        },
         onSuccess: () => {
             toast({
                 title: 'Concours ajouté',
