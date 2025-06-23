@@ -5,9 +5,27 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, FileText, CreditCard, User } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { CheckCircle, Clock, FileText, CreditCard, User, AlertCircle } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
+import { candidatureProgressService, EtapeType } from '@/services/candidatureProgress';
+
+interface CandidatWithParticipations {
+  id: number;
+  nupcan: string;
+  nomcan: string;
+  prncan: string;
+  maican: string;
+  telcan: string;
+  dtncan: string;
+  participations?: Array<{
+    id: number;
+    libcnc: string;
+    nomets: string;
+    statut: string;
+  }>;
+}
 
 const StatutCandidature = () => {
   const { nupcan } = useParams<{ nupcan: string }>();
@@ -19,13 +37,30 @@ const StatutCandidature = () => {
     enabled: !!nupcan,
   });
 
-  const candidat = candidatResponse?.data;
+  const candidat = candidatResponse?.data as CandidatWithParticipations | undefined;
+
+  // Récupérer ou initialiser la progression
+  const progression = React.useMemo(() => {
+    if (!nupcan) return null;
+    
+    let progress = candidatureProgressService.getProgress(nupcan);
+    if (!progress && candidat) {
+      // Première visite - initialiser la progression
+      progress = candidatureProgressService.createInitialProgress();
+      candidatureProgressService.markStepComplete(nupcan, 'inscription');
+      progress = candidatureProgressService.getProgress(nupcan);
+    }
+    return progress;
+  }, [nupcan, candidat]);
 
   if (isLoading) {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">Chargement de votre candidature...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Chargement de votre candidature...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -36,51 +71,51 @@ const StatutCandidature = () => {
       <Layout>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-red-600 mb-4">Candidature non trouvée</h1>
             <p className="text-muted-foreground mb-6">
               Aucune candidature trouvée avec ce numéro : {nupcan}
             </p>
-            <Button onClick={() => navigate('/connexion')}>
-              Réessayer la connexion
-            </Button>
+            <div className="space-x-4">
+              <Button onClick={() => navigate('/connexion')}>
+                Réessayer la connexion
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/concours')}>
+                Voir les concours
+              </Button>
+            </div>
           </div>
         </div>
       </Layout>
     );
   }
 
-  // Déterminer l'étape actuelle
-  const getEtapeActuelle = () => {
-    // Si le candidat existe, l'inscription est terminée
-    if (candidat) {
-      // Vérifier s'il a des documents uploadés (à implémenter plus tard)
-      // Vérifier s'il a payé (à implémenter plus tard)
-      return 'documents'; // Pour l'instant, on considère qu'il doit upload ses documents
-    }
-    return 'inscription';
-  };
-
-  const etapeActuelle = getEtapeActuelle();
+  const etapeActuelle = progression?.etapeActuelle || 'inscription';
+  const etapesCompletes = progression?.etapesCompletes || ['inscription'];
+  const completionPercentage = candidatureProgressService.getCompletionPercentage(nupcan!);
 
   const etapes = [
     {
-      id: 'inscription',
+      id: 'inscription' as EtapeType,
       nom: 'Inscription',
-      statut: 'termine',
+      statut: etapesCompletes.includes('inscription') ? 'termine' : 
+               etapeActuelle === 'inscription' ? 'en-cours' : 'attente',
       icone: User,
       description: 'Informations personnelles enregistrées'
     },
     {
-      id: 'documents',
+      id: 'documents' as EtapeType,
       nom: 'Documents',
-      statut: etapeActuelle === 'documents' ? 'en-cours' : (etapeActuelle === 'paiement' || etapeActuelle === 'termine' ? 'termine' : 'attente'),
+      statut: etapesCompletes.includes('documents') ? 'termine' : 
+               etapeActuelle === 'documents' ? 'en-cours' : 'attente',
       icone: FileText,
       description: 'Upload des documents requis'
     },
     {
-      id: 'paiement',
+      id: 'paiement' as EtapeType,
       nom: 'Paiement',
-      statut: etapeActuelle === 'paiement' ? 'en-cours' : (etapeActuelle === 'termine' ? 'termine' : 'attente'),
+      statut: etapesCompletes.includes('paiement') ? 'termine' : 
+               etapeActuelle === 'paiement' ? 'en-cours' : 'attente',
       icone: CreditCard,
       description: 'Paiement des frais de candidature'
     }
@@ -110,6 +145,16 @@ const StatutCandidature = () => {
     }
   };
 
+  const getMessageBienvenue = () => {
+    const isReturningUser = progression?.dernierAcces && 
+      new Date(progression.dernierAcces).getTime() < Date.now() - (24 * 60 * 60 * 1000);
+    
+    if (isReturningUser) {
+      return "Bon retour ! Vous pouvez reprendre votre candidature où vous vous étiez arrêté.";
+    }
+    return "Suivez votre progression et terminez votre candidature.";
+  };
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -117,10 +162,29 @@ const StatutCandidature = () => {
           <h1 className="text-3xl font-bold text-foreground mb-2">
             État de votre candidature
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Numéro de candidature : <span className="font-mono font-semibold">{nupcan}</span>
           </p>
+          <p className="text-sm text-muted-foreground">
+            {getMessageBienvenue()}
+          </p>
         </div>
+
+        {/* Barre de progression globale */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Progression de votre candidature</span>
+                <span>{completionPercentage}%</span>
+              </div>
+              <Progress value={completionPercentage} className="w-full" />
+              <p className="text-xs text-muted-foreground">
+                {etapesCompletes.length} sur 3 étapes terminées
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Informations du candidat */}
         <Card className="mb-8">
@@ -159,35 +223,39 @@ const StatutCandidature = () => {
               <CardTitle>Concours inscrits</CardTitle>
             </CardHeader>
             <CardContent>
-              {candidat.participations.map((participation: any) => (
-                <div key={participation.id} className="p-4 border rounded-lg">
-                  <h3 className="font-semibold">{participation.libcnc}</h3>
-                  <p className="text-sm text-muted-foreground">{participation.nomets}</p>
-                  <Badge className="mt-2" variant={participation.statut === 'inscrit' ? 'default' : 'secondary'}>
-                    {participation.statut}
-                  </Badge>
-                </div>
-              ))}
+              <div className="space-y-4">
+                {candidat.participations.map((participation) => (
+                  <div key={participation.id} className="p-4 border rounded-lg">
+                    <h3 className="font-semibold">{participation.libcnc}</h3>
+                    <p className="text-sm text-muted-foreground">{participation.nomets}</p>
+                    <Badge className="mt-2" variant={participation.statut === 'inscrit' ? 'default' : 'secondary'}>
+                      {participation.statut}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Progression */}
+        {/* Progression détaillée */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Progression de votre candidature</CardTitle>
+            <CardTitle>Étapes de votre candidature</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {etapes.map((etape, index) => {
                 const Icone = etape.icone;
                 return (
                   <div key={etape.id} className="flex items-center space-x-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getStatutColor(etape.statut)}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getStatutColor(etape.statut)}`}>
                       {etape.statut === 'termine' ? (
-                        <CheckCircle className="h-5 w-5 text-white" />
+                        <CheckCircle className="h-6 w-6 text-white" />
+                      ) : etape.statut === 'en-cours' ? (
+                        <Clock className="h-6 w-6 text-white" />
                       ) : (
-                        <Icone className="h-5 w-5 text-white" />
+                        <Icone className="h-6 w-6 text-white" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -196,6 +264,11 @@ const StatutCandidature = () => {
                         {getStatutBadge(etape.statut)}
                       </div>
                       <p className="text-sm text-muted-foreground">{etape.description}</p>
+                      {etape.statut === 'en-cours' && (
+                        <p className="text-sm text-blue-600 font-medium mt-1">
+                          Étape en cours - Cliquez sur "Continuer" ci-dessous
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
@@ -210,6 +283,7 @@ const StatutCandidature = () => {
             onClick={continuerCandidature}
             className="bg-primary hover:bg-primary/90"
             disabled={etapeActuelle === 'termine'}
+            size="lg"
           >
             {etapeActuelle === 'documents' && 'Continuer - Upload documents'}
             {etapeActuelle === 'paiement' && 'Continuer - Effectuer le paiement'}
@@ -218,10 +292,23 @@ const StatutCandidature = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/concours')}
+            size="lg"
           >
             Voir les autres concours
           </Button>
         </div>
+
+        {/* Informations de session */}
+        {progression && (
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Dernière connexion : {new Date(progression.dernierAcces).toLocaleString('fr-FR')}</p>
+                <p>Inscription : {new Date(progression.dateInscription).toLocaleString('fr-FR')}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Layout>
   );
