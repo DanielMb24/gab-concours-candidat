@@ -34,6 +34,8 @@ const Paiement = () => {
   const participation = simulatedParticipation;
   const paiementExistant = null; // Pas de paiement existant pour l'instant
 
+
+
   // Mutation pour créer un paiement
   const createPaiementMutation = useMutation({
     mutationFn: async (paiementData: {
@@ -256,8 +258,11 @@ const Paiement = () => {
             Retour aux documents
           </Button>
 
+
+
           {!paiementExistant && (
-            <Button
+            <Button 
+
               onClick={handlePaiement}
               disabled={(!numeroTelephone && methodePaiement !== 'virement') || processing}
               className="bg-primary hover:bg-primary/90"
@@ -266,8 +271,11 @@ const Paiement = () => {
             </Button>
           )}
 
+
           {paiementExistant && (
             <Button
+
+
               onClick={() => navigate(`/succes/${candidatureId}`)}
               className="bg-primary hover:bg-primary/90"
             >

@@ -18,9 +18,6 @@ export interface Candidat {
   ldncan: string;
   created_at: string;
   updated_at: string;
-  // Propriétés additionnelles pour l'admin
-  participations_count?: number;
-  statut?: string;
 }
 
 export interface Concours {

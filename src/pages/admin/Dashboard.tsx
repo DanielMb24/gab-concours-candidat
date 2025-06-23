@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,7 @@ const Dashboard = () => {
   };
 
   const concoursActifs = concours.filter(c => c.stacnc === '1').length;
-  const candidatsActifs = candidats.filter(c => (c.statut || 'actif') !== 'inactif').length;
+  const candidatsActifs = candidats.filter(c => c.statut !== 'inactif').length;
 
   const dashboardStats = [
     {
