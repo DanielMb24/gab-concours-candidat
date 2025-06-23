@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +11,22 @@ import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 import { candidatureProgressService, EtapeType } from '@/services/candidatureProgress';
 import { toast } from '@/hooks/use-toast';
-import { Candidat } from '@/types/entities';
+
+interface CandidatWithParticipations {
+  id: number;
+  nupcan: string;
+  nomcan: string;
+  prncan: string;
+  maican: string;
+  telcan: string;
+  dtncan: string;
+  participations?: Array<{
+    id: number;
+    libcnc: string;
+    nomets: string;
+    statut: string;
+  }>;
+}
 
 const StatutCandidature = () => {
   const { nupcan } = useParams<{ nupcan: string }>();
@@ -23,7 +39,7 @@ const StatutCandidature = () => {
     enabled: !!nupcan,
   });
 
-  const candidat = candidatResponse?.data as Candidat | undefined;
+  const candidat = candidatResponse?.data as CandidatWithParticipations | undefined;
 
   // Fonction pour rafraîchir le statut
   const refreshStatus = () => {
@@ -220,7 +236,7 @@ const StatutCandidature = () => {
         </Card>
 
         {/* Concours inscrits */}
-        {candidat?.participations && candidat.participations.length > 0 && (
+        {candidat.participations && candidat.participations.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Concours inscrits</CardTitle>
@@ -232,7 +248,7 @@ const StatutCandidature = () => {
                     <h3 className="font-semibold">{participation.libcnc}</h3>
                     <p className="text-sm text-muted-foreground">{participation.nomets}</p>
                     <Badge className="mt-2" variant={participation.statut === 'inscrit' ? 'default' : 'secondary'}>
-                      {participation.statut || 'inscrit'}
+                      {participation.statut}
                     </Badge>
                   </div>
                 ))}

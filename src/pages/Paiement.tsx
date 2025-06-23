@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -12,7 +13,7 @@ import { candidatureProgressService } from '@/services/candidatureProgress';
 import { toast } from '@/hooks/use-toast';
 
 const Paiement = () => {
-  const { nupcan } = useParams<{ nupcan: string }>();
+  const { candidatureId } = useParams<{ candidatureId: string }>();
   const navigate = useNavigate();
   
   const [methodePaiement, setMethodePaiement] = useState<'airtel' | 'moov' | 'virement'>('airtel');
@@ -21,21 +22,21 @@ const Paiement = () => {
 
   // Récupérer les informations du candidat
   const { data: candidatResponse } = useQuery({
-    queryKey: ['candidat-nupcan', nupcan],
-    queryFn: () => apiService.getCandidatByNupcan(nupcan!),
-    enabled: !!nupcan,
+    queryKey: ['candidat-nupcan', candidatureId],
+    queryFn: () => apiService.getCandidatByNupcan(candidatureId!),
+    enabled: !!candidatureId,
   });
 
   const candidat = candidatResponse?.data;
 
-  // Récupérer les paiements existants
+  // Récupérer un éventuel paiement existant
   const { data: paiementResponse } = useQuery({
     queryKey: ['paiement', candidat?.id],
-    queryFn: () => apiService.getPaiementsByCandidat(candidat!.id),
+    queryFn: () => apiService.getCandidatByNupcan(candidatureId!), // Pour l'instant pas d'API spécifique
     enabled: !!candidat?.id,
   });
 
-  const paiementExistant = paiementResponse?.data?.[0];
+  const paiementExistant = null; // À implémenter avec l'API
 
   // Mutation pour créer un paiement
   const createPaiementMutation = useMutation({
@@ -61,13 +62,13 @@ const Paiement = () => {
       });
       
       // Marquer l'étape paiement comme complète
-      if (nupcan) {
-        candidatureProgressService.markStepComplete(nupcan, 'paiement');
+      if (candidatureId) {
+        candidatureProgressService.markStepComplete(candidatureId, 'paiement');
       }
       
       // Simuler la validation automatique après quelques secondes
       setTimeout(() => {
-        navigate(`/succes/${nupcan}`);
+        navigate(`/succes/${candidatureId}`);
       }, 2000);
     },
     onError: (error) => {
@@ -105,7 +106,7 @@ const Paiement = () => {
 
   // Si un paiement est déjà validé, rediriger vers succès
   if (paiementExistant && paiementExistant.statut === 'valide') {
-    navigate(`/succes/${nupcan}`);
+    navigate(`/succes/${candidatureId}`);
     return null;
   }
 
@@ -117,7 +118,7 @@ const Paiement = () => {
             Paiement des Frais d'Inscription
           </h1>
           <p className="text-muted-foreground">
-            Candidature: {nupcan}
+            Candidature: {candidatureId}
           </p>
           {candidat && (
             <p className="text-sm text-muted-foreground mt-2">
@@ -137,13 +138,13 @@ const Paiement = () => {
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <h4 className="font-medium mb-2">Détails de la candidature</h4>
                   <p className="text-sm text-muted-foreground">
-                    Numéro: {nupcan}
+                    Numéro: {candidatureId}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Concours: {candidat.participations[0]?.libcnc || 'Non spécifié'}
+                    Concours: {candidat.participations[0]?.libcnc}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Établissement: {candidat.participations[0]?.nomets || 'Non spécifié'}
+                    Établissement: {candidat.participations[0]?.nomets}
                   </p>
                 </div>
               )}
@@ -168,10 +169,10 @@ const Paiement = () => {
             <CardContent>
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <p className="text-yellow-800">
-                  Un paiement de {(parseInt(paiementExistant.mntfrai) || 50000).toLocaleString()} FCFA est déjà en cours de traitement.
+                  Un paiement de {(paiementExistant.montant || 50000).toLocaleString()} FCFA est déjà en cours de traitement.
                 </p>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Référence: REF_{paiementExistant.id}
+                  Référence: {paiementExistant.reference || 'REF_' + Date.now()}
                 </p>
               </div>
             </CardContent>
@@ -272,7 +273,7 @@ const Paiement = () => {
 
         {/* Actions */}
         <div className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate(`/documents/${nupcan}`)}>
+          <Button variant="outline" onClick={() => navigate(`/documents/${candidatureId}`)}>
             Retour aux documents
           </Button>
           
@@ -288,7 +289,7 @@ const Paiement = () => {
           
           {paiementExistant && (
             <Button 
-              onClick={() => navigate(`/succes/${nupcan}`)}
+              onClick={() => navigate(`/succes/${candidatureId}`)}
               className="bg-primary hover:bg-primary/90"
             >
               Voir le statut
