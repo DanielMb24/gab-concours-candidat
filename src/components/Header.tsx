@@ -25,19 +25,19 @@ const Header = () => {
             <Link to="/concours" className="text-muted-foreground hover:text-foreground transition-colors">
               Concours
             </Link>
-            {/*<Link to="/connexion" className="text-muted-foreground hover:text-foreground transition-colors">*/}
-            {/*  Se connecter*/}
-            {/*</Link>*/}
+            <Link to="/connexion" className="text-muted-foreground hover:text-foreground transition-colors">
+              Se connecter
+            </Link>
           </nav>
 
-          {/*<div className="flex items-center space-x-4">*/}
-          {/*  <Button variant="ghost" size="sm" asChild>*/}
-          {/*    <Link to="/admin">*/}
-          {/*      <Settings className="h-4 w-4 mr-2" />*/}
-          {/*      Administration*/}
-          {/*    </Link>*/}
-          {/*  </Button>*/}
-          {/*</div>*/}
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin">
+                <Settings className="h-4 w-4 mr-2" />
+                Administration
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </header>

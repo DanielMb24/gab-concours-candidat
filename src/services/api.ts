@@ -18,6 +18,9 @@ import {
 // Utiliser le backend local
 const API_BASE_URL = 'http://localhost:3002/api';
 
+class ConcoursFormData {
+}
+
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -209,6 +212,10 @@ class ApiService {
 
   clearSession(): void {
     localStorage.removeItem('gabconcours_session');
+  }
+
+  createConcours(data: ConcoursFormData) {
+
   }
 }
 
