@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -77,7 +78,17 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
     });
 
     const onSubmit = (data: ConcoursFormData) => {
-        mutation.mutate(data);
+        // Ensure all fields are strings as required by ConcoursFormData
+        const validatedData: ConcoursFormData = {
+            libcnc: data.libcnc || '',
+            sescnc: data.sescnc || '',
+            debcnc: data.debcnc || '',
+            fincnc: data.fincnc || '',
+            fracnc: data.fracnc || '',
+            etablissement_id: data.etablissement_id || '',
+            stacnc: data.stacnc || '',
+        };
+        mutation.mutate(validatedData);
     };
 
     return (
@@ -141,3 +152,4 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
 };
 
 export default AddConcoursForm;
+
