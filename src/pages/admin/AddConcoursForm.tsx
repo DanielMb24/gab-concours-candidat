@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -66,6 +67,7 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
     });
 
     const onSubmit = (data: ConcoursFormData) => {
+        console.log('Form data:', data);
         mutation.mutate(data);
     };
 
