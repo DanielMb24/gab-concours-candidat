@@ -1,4 +1,3 @@
-
 import {
   Concours,
   ConcoursApiResponse,
