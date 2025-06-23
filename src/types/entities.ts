@@ -21,6 +21,17 @@ export interface Candidat {
   // Propriétés additionnelles pour l'admin
   participations_count?: number;
   statut?: string;
+  // Participations du candidat
+  participations?: Array<{
+    id: number;
+    candidat_id: number;
+    concours_id: number;
+    stspar: number;
+    libcnc?: string;
+    nomets?: string;
+    created_at: string;
+    updated_at: string;
+  }>;
 }
 
 export interface Concours {
