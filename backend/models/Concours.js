@@ -41,13 +41,13 @@ class Concours {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         concoursData.etablissement_id,
-        concoursData.niveau_id,
+        concoursData.niveau_id || null,
         concoursData.libcnc,
         concoursData.sescnc,
         concoursData.debcnc,
         concoursData.fincnc,
         concoursData.stacnc || '1',
-        concoursData.agecnc,
+        concoursData.agecnc || null,
         concoursData.fracnc,
         concoursData.etddos || '0'
       ]
@@ -67,6 +67,12 @@ class Concours {
     );
 
     return this.findById(id);
+  }
+
+  static async delete(id) {
+    const connection = getConnection();
+    await connection.execute('DELETE FROM concours WHERE id = ?', [id]);
+    return { success: true };
   }
 }
 

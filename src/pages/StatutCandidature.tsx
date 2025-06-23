@@ -9,6 +9,24 @@ import { CheckCircle, Clock, FileText, CreditCard, User } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 
+type EtapeType = 'inscription' | 'documents' | 'paiement' | 'termine';
+
+interface CandidatWithParticipations {
+  id: number;
+  nupcan: string;
+  nomcan: string;
+  prncan: string;
+  maican: string;
+  telcan: string;
+  dtncan: string;
+  participations?: Array<{
+    id: number;
+    libcnc: string;
+    nomets: string;
+    statut: string;
+  }>;
+}
+
 const StatutCandidature = () => {
   const { nupcan } = useParams<{ nupcan: string }>();
   const navigate = useNavigate();
@@ -19,7 +37,7 @@ const StatutCandidature = () => {
     enabled: !!nupcan,
   });
 
-  const candidat = candidatResponse?.data;
+  const candidat = candidatResponse?.data as CandidatWithParticipations | undefined;
 
   if (isLoading) {
     return (
@@ -50,11 +68,10 @@ const StatutCandidature = () => {
   }
 
   // Déterminer l'étape actuelle
-  const getEtapeActuelle = () => {
-    // Si le candidat existe, l'inscription est terminée
+  const getEtapeActuelle = (): EtapeType => {
     if (candidat) {
-      // Vérifier s'il a des documents uploadés (à implémenter plus tard)
-      // Vérifier s'il a payé (à implémenter plus tard)
+      // TODO: Vérifier s'il a des documents uploadés
+      // TODO: Vérifier s'il a payé
       return 'documents'; // Pour l'instant, on considère qu'il doit upload ses documents
     }
     return 'inscription';
@@ -64,23 +81,25 @@ const StatutCandidature = () => {
 
   const etapes = [
     {
-      id: 'inscription',
+      id: 'inscription' as const,
       nom: 'Inscription',
-      statut: 'termine',
+      statut: 'termine' as const,
       icone: User,
       description: 'Informations personnelles enregistrées'
     },
     {
-      id: 'documents',
+      id: 'documents' as const,
       nom: 'Documents',
-      statut: etapeActuelle === 'documents' ? 'en-cours' : (etapeActuelle === 'paiement' || etapeActuelle === 'termine' ? 'termine' : 'attente'),
+      statut: (etapeActuelle === 'documents' ? 'en-cours' : 
+               (etapeActuelle === 'paiement' || etapeActuelle === 'termine' ? 'termine' : 'attente')) as const,
       icone: FileText,
       description: 'Upload des documents requis'
     },
     {
-      id: 'paiement',
+      id: 'paiement' as const,
       nom: 'Paiement',
-      statut: etapeActuelle === 'paiement' ? 'en-cours' : (etapeActuelle === 'termine' ? 'termine' : 'attente'),
+      statut: (etapeActuelle === 'paiement' ? 'en-cours' : 
+               (etapeActuelle === 'termine' ? 'termine' : 'attente')) as const,
       icone: CreditCard,
       description: 'Paiement des frais de candidature'
     }
@@ -159,7 +178,7 @@ const StatutCandidature = () => {
               <CardTitle>Concours inscrits</CardTitle>
             </CardHeader>
             <CardContent>
-              {candidat.participations.map((participation: any) => (
+              {candidat.participations.map((participation) => (
                 <div key={participation.id} className="p-4 border rounded-lg">
                   <h3 className="font-semibold">{participation.libcnc}</h3>
                   <p className="text-sm text-muted-foreground">{participation.nomets}</p>
