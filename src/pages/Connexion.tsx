@@ -43,8 +43,8 @@ const Connexion = () => {
         description: "Connexion à votre espace candidature",
       });
 
-      // Rediriger vers la page de documents
-      navigate(`/documents/${numeroCandidature.trim()}`);
+      // Rediriger vers la page de statut de candidature
+      navigate(`/statut/${encodeURIComponent(numeroCandidature.trim())}`);
     } catch (error) {
       console.error('Search error:', error);
       toast({

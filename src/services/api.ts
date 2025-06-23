@@ -97,7 +97,7 @@ class ApiService {
   }
 
   async getCandidatByNupcan(nupcan: string): Promise<ApiResponse<Candidat>> {
-    return this.request(`/candidats/nupcan/${nupcan}`);
+    return this.request(`/candidats/nupcan/${encodeURIComponent(nupcan)}`);
   }
 
   // Etudiant endpoints (pour l'inscription complète avec concours)

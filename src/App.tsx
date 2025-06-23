@@ -13,6 +13,7 @@ import Paiement from '@/pages/Paiement';
 import Succes from '@/pages/Succes';
 import Connexion from '@/pages/Connexion';
 import NotFound from '@/pages/NotFound';
+import StatutCandidature from '@/pages/StatutCandidature';
 
 // Pages admin
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/concours" element={<Concours />} />
               <Route path="/candidature/:concoursId" element={<Candidature />} />
               <Route path="/confirmation/:numeroCandidature" element={<Confirmation />} />
+              <Route path="/statut/:nupcan" element={<StatutCandidature />} />
               <Route path="/documents/:candidatureId" element={<Documents />} />
               <Route path="/paiement/:candidatureId" element={<Paiement />} />
               <Route path="/succes/:candidatureId" element={<Succes />} />

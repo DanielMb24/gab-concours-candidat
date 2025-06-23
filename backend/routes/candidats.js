@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const Candidat = require('../models/Candidat');
@@ -64,6 +63,36 @@ router.get('/nip/:nip', async (req, res) => {
     res.json({ data: candidat });
   } catch (error) {
     console.error('Erreur lors de la recherche par NIP:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur', 
+      errors: [error.message] 
+    });
+  }
+});
+
+// GET /api/candidats/nupcan/:nupcan - Récupérer un candidat par NUPCAN
+router.get('/nupcan/:nupcan', async (req, res) => {
+  try {
+    const candidat = await Candidat.findByNupcan(req.params.nupcan);
+    if (!candidat) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Candidat non trouvé avec ce numéro de candidature' 
+      });
+    }
+
+    // Récupérer aussi les participations du candidat
+    const participations = await Candidat.getParticipations(candidat.id);
+    
+    res.json({ 
+      data: {
+        ...candidat,
+        participations: participations
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la recherche par NUPCAN:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Erreur serveur', 
