@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +29,7 @@ const Candidats = () => {
 
   const getStatusBadge = (candidat: any) => {
     // Déterminer le statut basé sur les participations
-    const hasParticipations = candidat.participations_count > 0;
+    const hasParticipations = (candidat.participations_count || 0) > 0;
     if (hasParticipations) {
       return <Badge className="bg-green-100 text-green-800">Actif</Badge>;
     }

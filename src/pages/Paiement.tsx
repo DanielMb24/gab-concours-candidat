@@ -14,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 const Paiement = () => {
   const { candidatureId } = useParams<{ candidatureId: string }>();
   const navigate = useNavigate();
-
+  
   const [methodePaiement, setMethodePaiement] = useState<'airtel' | 'moov' | 'virement'>('airtel');
   const [numeroTelephone, setNumeroTelephone] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -34,8 +34,6 @@ const Paiement = () => {
   const participation = simulatedParticipation;
   const paiementExistant = null; // Pas de paiement existant pour l'instant
 
-
-
   // Mutation pour créer un paiement
   const createPaiementMutation = useMutation({
     mutationFn: async (paiementData: {
@@ -54,7 +52,7 @@ const Paiement = () => {
         title: "Paiement initié !",
         description: "Votre paiement a été enregistré et est en cours de traitement",
       });
-
+      
       // Simuler la validation automatique après quelques secondes
       setTimeout(() => {
         navigate(`/succes/${candidatureId}`);
@@ -82,7 +80,7 @@ const Paiement = () => {
     }
 
     setProcessing(true);
-
+    
     // Simuler le processus de paiement
     setTimeout(() => {
       createPaiementMutation.mutate({
@@ -129,7 +127,7 @@ const Paiement = () => {
                   </p>
                 </div>
               )}
-
+              
               <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
                 <span className="font-semibold">Frais d'inscription:</span>
                 <span className="text-2xl font-bold text-primary">50 000 FCFA</span>
@@ -257,12 +255,9 @@ const Paiement = () => {
           <Button variant="outline" onClick={() => navigate(`/documents/${candidatureId}`)}>
             Retour aux documents
           </Button>
-
-
-
+          
           {!paiementExistant && (
             <Button 
-
               onClick={handlePaiement}
               disabled={(!numeroTelephone && methodePaiement !== 'virement') || processing}
               className="bg-primary hover:bg-primary/90"
@@ -270,12 +265,9 @@ const Paiement = () => {
               {processing ? 'Traitement...' : 'Payer 50 000 FCFA'}
             </Button>
           )}
-
-
+          
           {paiementExistant && (
-            <Button
-
-
+            <Button 
               onClick={() => navigate(`/succes/${candidatureId}`)}
               className="bg-primary hover:bg-primary/90"
             >
