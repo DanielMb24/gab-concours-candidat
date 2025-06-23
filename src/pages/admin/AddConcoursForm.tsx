@@ -48,7 +48,7 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
 
     const mutation = useMutation({
         mutationFn: (data: ConcoursFormData) => {
-            // S'assurer que toutes les propriétés sont présentes et de type string
+            // Ensure all properties are present and of type string
             const formattedData: ConcoursFormData = {
                 libcnc: data.libcnc,
                 sescnc: data.sescnc,
@@ -78,17 +78,7 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
     });
 
     const onSubmit = (data: ConcoursFormData) => {
-        // Ensure all fields are strings as required by ConcoursFormData
-        const validatedData: ConcoursFormData = {
-            libcnc: data.libcnc || '',
-            sescnc: data.sescnc || '',
-            debcnc: data.debcnc || '',
-            fincnc: data.fincnc || '',
-            fracnc: data.fracnc || '',
-            etablissement_id: data.etablissement_id || '',
-            stacnc: data.stacnc || '',
-        };
-        mutation.mutate(validatedData);
+        mutation.mutate(data);
     };
 
     return (
