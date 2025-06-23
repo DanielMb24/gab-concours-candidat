@@ -12,22 +12,6 @@ import { candidatureProgressService, EtapeType } from '@/services/candidaturePro
 import { toast } from '@/hooks/use-toast';
 import { Candidat } from '@/types/entities';
 
-interface CandidatWithParticipations {
-  id: number;
-  nupcan: string;
-  nomcan: string;
-  prncan: string;
-  maican: string;
-  telcan: string;
-  dtncan: string;
-  participations?: Array<{
-    id: number;
-    libcnc: string;
-    nomets: string;
-    statut: string;
-  }>;
-}
-
 const StatutCandidature = () => {
   const { nupcan } = useParams<{ nupcan: string }>();
   const navigate = useNavigate();

@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -47,9 +48,9 @@ function App() {
               <Route path="/candidature/:concoursId" element={<Candidature />} />
               <Route path="/confirmation/:numeroCandidature" element={<Confirmation />} />
               <Route path="/statut/:nupcan" element={<StatutCandidature />} />
-              <Route path="/documents/:candidatureId" element={<Documents />} />
-              <Route path="/paiement/:candidatureId" element={<Paiement />} />
-              <Route path="/succes/:candidatureId" element={<Succes />} />
+              <Route path="/documents/:nupcan" element={<Documents />} />
+              <Route path="/paiement/:nupcan" element={<Paiement />} />
+              <Route path="/succes/:nupcan" element={<Succes />} />
               <Route path="/connexion" element={<Connexion />} />
 
               {/* Routes admin */}
