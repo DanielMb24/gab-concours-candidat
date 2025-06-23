@@ -1,4 +1,3 @@
-
 import {
   Concours,
   ConcoursApiResponse,
@@ -168,6 +167,20 @@ class ApiService {
     return this.request('/payements', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async getPaiementsByCandidat(candidatId: number): Promise<ApiResponse<Paiement[]>> {
+    return this.request(`/paiements/candidat/${candidatId}`);
+  }
+
+  async getPaiements(): Promise<ApiResponse<Paiement[]>> {
+    return this.request('/paiements');
+  }
+
+  async validatePaiement(paiementId: number): Promise<ApiResponse<Paiement>> {
+    return this.request(`/paiements/${paiementId}/validate`, {
+      method: 'POST',
     });
   }
 
