@@ -1,8 +1,6 @@
 // Types pour toutes les entités du système selon l'API gabcnc.labodev.link
 
 export interface Candidat {
-  [x: string]: number;
-  participations: Candidat;
   id: number;
   niveau_id: number;
   niveau_nomniv?: string;
