@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -48,17 +46,7 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
 
     const mutation = useMutation({
         mutationFn: (data: ConcoursFormData) => {
-            // Ensure all properties are present and of type string
-            const formattedData: ConcoursFormData = {
-                libcnc: data.libcnc,
-                sescnc: data.sescnc,
-                debcnc: data.debcnc,
-                fincnc: data.fincnc,
-                fracnc: data.fracnc,
-                etablissement_id: data.etablissement_id,
-                stacnc: data.stacnc,
-            };
-            return apiService.createConcours(formattedData);
+            return apiService.createConcours(data);
         },
         onSuccess: () => {
             toast({
@@ -142,4 +130,3 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
 };
 
 export default AddConcoursForm;
-
