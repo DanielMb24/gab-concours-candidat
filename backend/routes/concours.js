@@ -58,4 +58,30 @@ router.post('/', async (req, res) => {
   }
 });
 
+// DELETE /api/concours/:id - Supprimer un concours
+router.delete('/:id', async (req, res) => {
+  try {
+    const concours = await Concours.findById(req.params.id);
+    if (!concours) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Concours non trouvé' 
+      });
+    }
+    
+    await Concours.delete(req.params.id);
+    res.json({ 
+      success: true, 
+      message: 'Concours supprimé avec succès' 
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du concours:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur', 
+      errors: [error.message] 
+    });
+  }
+});
+
 module.exports = router;
