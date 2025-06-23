@@ -29,7 +29,6 @@ export interface Candidat {
     stspar: number;
     libcnc?: string;
     nomets?: string;
-    statut?: string;
     created_at: string;
     updated_at: string;
   }>;
@@ -83,9 +82,6 @@ export interface Paiement {
   candidat_id: number;
   mntfrai: string;
   datfrai: string;
-  montant?: string;
-  reference?: string;
-  statut?: 'en_attente' | 'valide' | 'rejete';
   created_at: string;
   updated_at: string;
 }
