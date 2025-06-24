@@ -170,7 +170,7 @@ const Dashboard = () => {
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5" />
               <span>Candidats Récents</span>
-            </Car dTitle>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
