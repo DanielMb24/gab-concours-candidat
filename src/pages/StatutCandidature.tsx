@@ -10,6 +10,7 @@ import { CheckCircle, Clock, FileText, CreditCard, User, AlertCircle } from 'luc
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 import { candidatureProgressService, EtapeType } from '@/services/candidatureProgress';
+import { routeManager } from '@/services/routeManager';
 
 interface CandidatWithParticipations {
   id: number;
@@ -139,9 +140,11 @@ const StatutCandidature = () => {
 
   const continuerCandidature = () => {
     if (etapeActuelle === 'documents') {
-      navigate(`/documents/${nupcan}`);
+      const documentsUrl = routeManager.getDocumentsUrl({ nupcan: nupcan! });
+      navigate(documentsUrl);
     } else if (etapeActuelle === 'paiement') {
-      navigate(`/paiement/${nupcan}`);
+      const paiementUrl = routeManager.getPaiementUrl({ nupcan: nupcan! });
+      navigate(paiementUrl);
     }
   };
 
