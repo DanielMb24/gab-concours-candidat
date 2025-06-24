@@ -34,10 +34,20 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
         formState: { errors, isSubmitting },
     } = useForm<ConcoursFormData>({
         resolver: zodResolver(concoursSchema),
+        defaultValues: {
+            libcnc: '',
+            sescnc: '',
+            debcnc: '',
+            fincnc: '',
+            fracnc: '',
+            etablissement_id: '',
+            stacnc: '',
+        }
     });
 
     const mutation = useMutation({
         mutationFn: (data: ConcoursFormData) => {
+            console.log('Données à envoyer:', data);
             return apiService.createConcours(data);
         },
         onSuccess: () => {
@@ -48,7 +58,8 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
             reset();
             onSuccess?.();
         },
-        onError: () => {
+        onError: (error) => {
+            console.error('Erreur lors de la création:', error);
             toast({
                 title: 'Erreur',
                 description: 'Impossible d\'ajouter le concours',
