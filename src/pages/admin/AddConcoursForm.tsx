@@ -42,7 +42,7 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
             fracnc: '',
             etablissement_id: '',
             stacnc: ''
-        }
+        } as ConcoursFormData
     });
 
     const mutation = useMutation({
