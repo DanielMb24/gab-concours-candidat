@@ -26,6 +26,16 @@ interface Props {
 }
 
 const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
+    const defaultValues: ConcoursFormData = {
+        libcnc: '',
+        sescnc: '',
+        debcnc: '',
+        fincnc: '',
+        fracnc: '',
+        etablissement_id: '',
+        stacnc: ''
+    };
+
     const {
         register,
         handleSubmit,
@@ -33,15 +43,7 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
         formState: { errors, isSubmitting },
     } = useForm<ConcoursFormData>({
         resolver: zodResolver(concoursSchema),
-        defaultValues: {
-            libcnc: '',
-            sescnc: '',
-            debcnc: '',
-            fincnc: '',
-            fracnc: '',
-            etablissement_id: '',
-            stacnc: ''
-        } satisfies ConcoursFormData
+        defaultValues
     });
 
     const mutation = useMutation({
