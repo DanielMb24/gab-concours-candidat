@@ -1,4 +1,3 @@
-
 import {
   Concours,
   ConcoursApiResponse,
@@ -160,15 +159,31 @@ class ApiService {
   }
 
   // Paiement endpoints
+  async getPaiements(): Promise<ApiResponse<Paiement[]>> {
+    return this.request('/paiements');
+  }
+
   async createPaiement(data: {
     candidat_id: number;
     mntfrai: string;
     datfrai: string;
+    montant?: number;
+    methode?: string;
   }): Promise<ApiResponse<Paiement>> {
-    return this.request('/payements', {
+    return this.request('/paiements', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async validatePaiement(id: number): Promise<ApiResponse<Paiement>> {
+    return this.request(`/paiements/${id}/validate`, {
+      method: 'POST',
+    });
+  }
+
+  async getPaiementByParticipation(participationId: number): Promise<ApiResponse<Paiement>> {
+    return this.request(`/participations/${participationId}/paiement`);
   }
 
   // Province endpoints
@@ -205,7 +220,7 @@ class ApiService {
     });
   }
 
-  // Statistics endpoints
+  // Statistics endpoints (mise à jour pour inclure les vraies données)
   async getStatistics(): Promise<ApiResponse<{
     candidats: number;
     concours: number;
@@ -213,7 +228,36 @@ class ApiService {
     participations: number;
     paiements: number;
   }>> {
-    return this.request('/statistics');
+    try {
+      // Récupérer les données réelles pour calculer les statistiques
+      const [candidatsRes, concoursRes, etablissementsRes, paiementsRes] = await Promise.all([
+        this.getCandidats(),
+        this.getConcours(),
+        this.getEtablissements(),
+        this.getPaiements()
+      ]);
+
+      return {
+        data: {
+          candidats: candidatsRes.data?.length || 0,
+          concours: concoursRes.data?.length || 0,
+          etablissements: etablissementsRes.data?.length || 0,
+          participations: candidatsRes.data?.reduce((sum, c) => sum + (c.participations_count || 0), 0) || 0,
+          paiements: paiementsRes.data?.length || 0,
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      return {
+        data: {
+          candidats: 0,
+          concours: 0,
+          etablissements: 0,
+          participations: 0,
+          paiements: 0,
+        }
+      };
+    }
   }
 
   // Session simulation locale

@@ -71,6 +71,14 @@ export interface Paiement {
   candidat_id: number;
   mntfrai: string;
   datfrai: string;
+  montant?: number;
+  reference?: string;
+  statut?: 'en_attente' | 'valide' | 'rejete';
+  methode?: 'mobile_money' | 'virement' | 'especes';
+  candidat_nom?: string;
+  candidat_nip?: string;
+  concours?: string;
+  date_paiement?: string;
   created_at: string;
   updated_at: string;
 }
