@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -26,16 +27,6 @@ interface Props {
 }
 
 const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
-    const defaultValues: ConcoursFormData = {
-        libcnc: '',
-        sescnc: '',
-        debcnc: '',
-        fincnc: '',
-        fracnc: '',
-        etablissement_id: '',
-        stacnc: ''
-    };
-
     const {
         register,
         handleSubmit,
@@ -43,7 +34,15 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
         formState: { errors, isSubmitting },
     } = useForm<ConcoursFormData>({
         resolver: zodResolver(concoursSchema),
-        defaultValues
+        defaultValues: {
+            libcnc: '',
+            sescnc: '',
+            debcnc: '',
+            fincnc: '',
+            fracnc: '',
+            etablissement_id: '',
+            stacnc: ''
+        } as ConcoursFormData
     });
 
     const mutation = useMutation({
