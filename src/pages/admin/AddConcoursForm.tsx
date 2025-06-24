@@ -13,8 +13,8 @@ import { toast } from '@/hooks/use-toast';
 const concoursSchema = z.object({
     libcnc: z.string().min(2, 'Le nom du concours est requis'),
     sescnc: z.string().min(2, 'La session est requise'),
-    debcnc: z.string().refine((val) => !isNaN(Date.parse(val)), 'Date de début invalide'),
-    fincnc: z.string().refine((val) => !isNaN(Date.parse(val)), 'Date de fin invalide'),
+    debcnc: z.string().min(1, 'La date de début est requise'),
+    fincnc: z.string().min(1, 'La date de fin est requise'),
     fracnc: z.string().min(1, 'Les frais sont requis'),
     etablissement_id: z.string().min(1, "L'établissement est requis"),
     stacnc: z.string().min(1, 'Le statut est requis'),
@@ -41,12 +41,13 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
             fincnc: '',
             fracnc: '',
             etablissement_id: '',
-            stacnc: ''
+            stacnc: '',
         }
     });
 
     const mutation = useMutation({
         mutationFn: (data: ConcoursFormData) => {
+            console.log('Données à envoyer:', data);
             return apiService.createConcours(data);
         },
         onSuccess: () => {
@@ -57,7 +58,8 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
             reset();
             onSuccess?.();
         },
-        onError: () => {
+        onError: (error) => {
+            console.error('Erreur lors de la création:', error);
             toast({
                 title: 'Erreur',
                 description: 'Impossible d\'ajouter le concours',
