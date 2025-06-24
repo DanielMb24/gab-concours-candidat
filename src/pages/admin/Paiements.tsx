@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,49 +8,46 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Search, Eye, CheckCircle, XCircle, DollarSign, TrendingUp } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
-import { apiService } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
 
 const Paiements = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const queryClient = useQueryClient();
 
-  const { data: paiementsResponse, isLoading } = useQuery({
-    queryKey: ['admin-paiements'],
-    queryFn: () => apiService.getPaiements(),
-  });
-
-  const paiements = paiementsResponse?.data || [];
-
-  const validatePaiementMutation = useMutation({
-    mutationFn: (paiementId: number) => apiService.validatePaiement(paiementId),
-    onSuccess: () => {
-      toast({
-        title: "Paiement validé",
-        description: "Le paiement a été validé avec succès",
-      });
-      queryClient.invalidateQueries({ queryKey: ['admin-paiements'] });
+  // Mock data - à remplacer par une vraie API
+  const paiements = [
+    {
+      id: 1,
+      candidat_nom: 'MBOMA Jean Pierre',
+      candidat_nip: 'CONC2024001',
+      concours: 'École Nationale d\'Administration',
+      montant: 25000,
+      reference: 'PAY2024001',
+      statut: 'valide',
+      date_paiement: '2024-01-15',
+      methode: 'mobile_money'
     },
-    onError: (error) => {
-      console.error('Validation error:', error);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la validation du paiement",
-        variant: "destructive",
-      });
+    {
+      id: 2,
+      candidat_nom: 'NGOMO Marie Claire',
+      candidat_nip: 'CONC2024002',
+      concours: 'École Normale Supérieure',
+      montant: 30000,
+      reference: 'PAY2024002',
+      statut: 'en_attente',
+      date_paiement: '2024-01-16',
+      methode: 'virement'
     }
-  });
+  ];
 
-  const filteredPaiements = paiements.filter((p: any) => 
-    p.nomcan?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.prncan?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.nupcan?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.reference?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPaiements = paiements.filter(p => 
+    p.candidat_nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.candidat_nip.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.reference.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPaiements = paiements.reduce((sum: number, p: any) => sum + (parseInt(p.montant) || 0), 0);
-  const paiementsValides = paiements.filter((p: any) => p.statut === 'valide');
-  const totalValide = paiementsValides.reduce((sum: number, p: any) => sum + (parseInt(p.montant) || 0), 0);
+  const totalPaiements = paiements.reduce((sum, p) => sum + p.montant, 0);
+  const paiementsValides = paiements.filter(p => p.statut === 'valide');
+  const totalValide = paiementsValides.reduce((sum, p) => sum + p.montant, 0);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -66,18 +62,18 @@ const Paiements = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <AdminProtectedRoute>
-        <AdminLayout>
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p>Chargement des paiements...</p>
-          </div>
-        </AdminLayout>
-      </AdminProtectedRoute>
-    );
-  }
+  const getMethodeBadge = (methode: string) => {
+    switch (methode) {
+      case 'mobile_money':
+        return <Badge variant="outline">Mobile Money</Badge>;
+      case 'virement':
+        return <Badge variant="outline">Virement</Badge>;
+      case 'especes':
+        return <Badge variant="outline">Espèces</Badge>;
+      default:
+        return <Badge variant="outline">Autre</Badge>;
+    }
+  };
 
   return (
     <AdminProtectedRoute>
@@ -119,7 +115,7 @@ const Paiements = () => {
                   <CheckCircle className="h-8 w-8 text-green-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {paiements.filter((p: any) => p.statut === 'valide').length}
+                      {paiements.filter(p => p.statut === 'valide').length}
                     </p>
                     <p className="text-sm text-muted-foreground">Validés</p>
                   </div>
@@ -132,7 +128,7 @@ const Paiements = () => {
                   <XCircle className="h-8 w-8 text-orange-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {paiements.filter((p: any) => p.statut === 'en_attente').length}
+                      {paiements.filter(p => p.statut === 'en_attente').length}
                     </p>
                     <p className="text-sm text-muted-foreground">En attente</p>
                   </div>
@@ -160,26 +156,30 @@ const Paiements = () => {
                   <TableRow>
                     <TableHead>Candidat</TableHead>
                     <TableHead>Référence</TableHead>
+                    <TableHead>Concours</TableHead>
                     <TableHead>Montant</TableHead>
+                    <TableHead>Méthode</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPaiements.map((paiement: any) => (
+                  {filteredPaiements.map((paiement) => (
                     <TableRow key={paiement.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{paiement.prncan} {paiement.nomcan}</div>
-                          <div className="text-sm text-muted-foreground">{paiement.nupcan}</div>
+                          <div className="font-medium">{paiement.candidat_nom}</div>
+                          <div className="text-sm text-muted-foreground">{paiement.candidat_nip}</div>
                         </div>
                       </TableCell>
                       <TableCell className="font-mono">{paiement.reference}</TableCell>
+                      <TableCell>{paiement.concours}</TableCell>
                       <TableCell className="font-medium">
-                        {parseInt(paiement.montant || paiement.mntfrai || '0').toLocaleString()} FCFA
+                        {paiement.montant.toLocaleString()} FCFA
                       </TableCell>
-                      <TableCell>{new Date(paiement.created_at).toLocaleDateString('fr-FR')}</TableCell>
+                      <TableCell>{getMethodeBadge(paiement.methode)}</TableCell>
+                      <TableCell>{new Date(paiement.date_paiement).toLocaleDateString()}</TableCell>
                       <TableCell>{getStatusBadge(paiement.statut)}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
@@ -191,8 +191,6 @@ const Paiements = () => {
                               variant="ghost" 
                               size="sm"
                               className="text-green-600 hover:text-green-700"
-                              onClick={() => validatePaiementMutation.mutate(paiement.id)}
-                              disabled={validatePaiementMutation.isPending}
                             >
                               <CheckCircle className="h-4 w-4" />
                             </Button>

@@ -16,7 +16,7 @@ const Documents = () => {
   const navigate = useNavigate();
 
   const decodedCandidatureId = decodeURIComponent(candidatureId || '');
-const nupcan = decodedCandidatureId || '';
+
   const [selectedDocumentType, setSelectedDocumentType] = useState('');
   const [uploadedDocuments, setUploadedDocuments] = useState<{ [key: string]: File }>({});
 
@@ -29,10 +29,10 @@ const nupcan = decodedCandidatureId || '';
   ];
 
   const uploadMutation = useMutation({
-    mutationFn: async ({ files, concoursId, nupcan }: { files: { [key: string]: File }; concoursId: string; nupcan: string; }) => {
+    mutationFn: async ({ files, concoursId, nipcan }: { files: { [key: string]: File }; concoursId: string; nipcan: string; }) => {
       const formData = new FormData();
       formData.append('concours_id', concoursId);
-      formData.append('nupcan', nupcan);
+      formData.append('nipcan', nipcan);
       Object.entries(files).forEach(([type, file]) => {
         formData.append('documents', file, `${type}_${file.name}`);
       });
@@ -43,7 +43,7 @@ const nupcan = decodedCandidatureId || '';
         title: "Documents uploadés !",
         description: "Vos documents ont été envoyés avec succès",
       });
-      navigate(`/paiement/${nupcan}`);
+      navigate(`/paiement/${encodeURIComponent(decodedCandidatureId)}`);
     },
     onError: (error) => {
       console.error('Upload error:', error);
@@ -121,12 +121,12 @@ const nupcan = decodedCandidatureId || '';
       return;
     }
 
-    const nupcan = decodedCandidatureId || 'temp_nip';
+    const nipcan = decodedCandidatureId || 'temp_nip';
 
     uploadMutation.mutate({
       files: uploadedDocuments,
       concoursId: '1', // À adapter selon le contexte
-      nupcan: nupcan,
+      nipcan: nipcan,
     });
   };
 

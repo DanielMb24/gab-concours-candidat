@@ -1,55 +1,56 @@
-import React, { useEffect, useState } from 'react';
+
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Clock, FileText, CreditCard, User, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, Clock, FileText, CreditCard, User, AlertCircle } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 import { candidatureProgressService, EtapeType } from '@/services/candidatureProgress';
-import { toast } from '@/hooks/use-toast';
-import { Candidat } from '@/types/entities';
+
+interface CandidatWithParticipations {
+  id: number;
+  nupcan: string;
+  nomcan: string;
+  prncan: string;
+  maican: string;
+  telcan: string;
+  dtncan: string;
+  participations?: Array<{
+    id: number;
+    libcnc: string;
+    nomets: string;
+    statut: string;
+  }>;
+}
 
 const StatutCandidature = () => {
   const { nupcan } = useParams<{ nupcan: string }>();
   const navigate = useNavigate();
-  const [progression, setProgression] = useState(candidatureProgressService.getProgress(nupcan || ''));
 
-  const { data: candidatResponse, isLoading, refetch } = useQuery({
+  const { data: candidatResponse, isLoading } = useQuery({
     queryKey: ['candidat-nupcan', nupcan],
     queryFn: () => apiService.getCandidatByNupcan(nupcan!),
     enabled: !!nupcan,
   });
 
-  const candidat = candidatResponse?.data as Candidat | undefined;
+  const candidat = candidatResponse?.data as CandidatWithParticipations | undefined;
 
-  // Fonction pour rafraîchir le statut
-  const refreshStatus = () => {
-    if (!nupcan) return;
+  // Récupérer ou initialiser la progression
+  const progression = React.useMemo(() => {
+    if (!nupcan) return null;
     
-    const updatedProgression = candidatureProgressService.getProgress(nupcan);
-    setProgression(updatedProgression);
-    refetch();
-    
-    toast({
-      title: "Statut mis à jour",
-      description: "Votre progression a été actualisée",
-    });
-  };
-
-  // Initialiser la progression si elle n'existe pas
-  useEffect(() => {
-    if (!nupcan || !candidat) return;
-    
-    let currentProgression = candidatureProgressService.getProgress(nupcan);
-    if (!currentProgression) {
-      // Première visite - initialiser la progression avec inscription complète
-      candidatureProgressService.initializeProgressAfterInscription(nupcan);
-      currentProgression = candidatureProgressService.getProgress(nupcan);
-      setProgression(currentProgression);
+    let progress = candidatureProgressService.getProgress(nupcan);
+    if (!progress && candidat) {
+      // Première visite - initialiser la progression
+      progress = candidatureProgressService.createInitialProgress();
+      candidatureProgressService.markStepComplete(nupcan, 'inscription');
+      progress = candidatureProgressService.getProgress(nupcan);
     }
+    return progress;
   }, [nupcan, candidat]);
 
   if (isLoading) {
@@ -89,7 +90,7 @@ const StatutCandidature = () => {
     );
   }
 
-  const etapeActuelle = progression?.etapeActuelle || 'documents';
+  const etapeActuelle = progression?.etapeActuelle || 'inscription';
   const etapesCompletes = progression?.etapesCompletes || ['inscription'];
   const completionPercentage = candidatureProgressService.getCompletionPercentage(nupcan!);
 
@@ -164,13 +165,9 @@ const StatutCandidature = () => {
           <p className="text-muted-foreground mb-4">
             Numéro de candidature : <span className="font-mono font-semibold">{nupcan}</span>
           </p>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground">
             {getMessageBienvenue()}
           </p>
-          <Button variant="outline" size="sm" onClick={refreshStatus}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualiser le statut
-          </Button>
         </div>
 
         {/* Barre de progression globale */}
@@ -220,7 +217,7 @@ const StatutCandidature = () => {
         </Card>
 
         {/* Concours inscrits */}
-        {candidat?.participations && candidat.participations.length > 0 && (
+        {candidat.participations && candidat.participations.length > 0 && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Concours inscrits</CardTitle>
@@ -232,7 +229,7 @@ const StatutCandidature = () => {
                     <h3 className="font-semibold">{participation.libcnc}</h3>
                     <p className="text-sm text-muted-foreground">{participation.nomets}</p>
                     <Badge className="mt-2" variant={participation.statut === 'inscrit' ? 'default' : 'secondary'}>
-                      {participation.statut || 'inscrit'}
+                      {participation.statut}
                     </Badge>
                   </div>
                 ))}
