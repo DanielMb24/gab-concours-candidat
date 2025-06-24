@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -42,7 +41,7 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
             fracnc: '',
             etablissement_id: '',
             stacnc: ''
-        } as ConcoursFormData
+        } satisfies ConcoursFormData
     });
 
     const mutation = useMutation({
