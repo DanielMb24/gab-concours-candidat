@@ -5,22 +5,11 @@ const router = express.Router();
 const Candidat = require('../models/Candidat');
 const Participation = require('../models/Participation');
 const Concours = require('../models/Concours');
+const Counter = require('../models/Counter');
 const emailService = require('../services/emailService');
 
 // Configuration multer pour l'upload de fichiers
 const upload = multer({ dest: 'uploads/' });
-
-// Fonction pour générer le numéro unique de candidature avec le bon format
-function generateNupcan() {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  
-  // Générer un compteur séquentiel (simulé avec un nombre aléatoire pour le moment)
-  const counter = Math.floor(Math.random() * 999) + 1;
-  
-  return `GABCONCOURS-${month}-${day}-${counter}`;
-}
 
 // POST /api/etudiants - Créer un étudiant complet avec participation
 router.post('/', upload.single('photo'), async (req, res) => {
@@ -37,8 +26,8 @@ router.post('/', upload.single('photo'), async (req, res) => {
       });
     }
 
-    // Générer le numéro unique de candidature avec le bon format
-    const nupcan = generateNupcan();
+    // Générer le numéro unique de candidature avec compteur incrémental
+    const nupcan = await Counter.getNextNupcan();
 
     // Créer le candidat
     const candidatData = {
