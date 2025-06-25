@@ -9,8 +9,8 @@ class EmailService {
       port: 587,
       secure: false,
       auth: {
-        user: process.env.EMAIL_USER || 'noreply@gabconcours.com',
-        pass: process.env.EMAIL_PASS || 'password'
+        user: process.env.EMAIL_USER || 'dapierre25@gmail.com',
+        pass: process.env.EMAIL_PASS || 'iavr wlau pgvo lbbe'
       }
     });
   }
