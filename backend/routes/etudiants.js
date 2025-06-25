@@ -4,18 +4,22 @@ const multer = require('multer');
 const router = express.Router();
 const Candidat = require('../models/Candidat');
 const Participation = require('../models/Participation');
+const Concours = require('../models/Concours');
+const emailService = require('../services/emailService');
 
 // Configuration multer pour l'upload de fichiers
 const upload = multer({ dest: 'uploads/' });
 
-// Fonction pour générer le numéro unique de candidature
+// Fonction pour générer le numéro unique de candidature avec le bon format
 function generateNupcan() {
   const now = new Date();
-  const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-  return `GABCONCOURS${year}/${month}/${day}/${random}`;
+  
+  // Générer un compteur séquentiel (simulé avec un nombre aléatoire pour le moment)
+  const counter = Math.floor(Math.random() * 999) + 1;
+  
+  return `GABCONCOURS-${month}-${day}-${counter}`;
 }
 
 // POST /api/etudiants - Créer un étudiant complet avec participation
@@ -33,7 +37,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
       });
     }
 
-    // Générer le numéro unique de candidature
+    // Générer le numéro unique de candidature avec le bon format
     const nupcan = generateNupcan();
 
     // Créer le candidat
@@ -58,18 +62,34 @@ router.post('/', upload.single('photo'), async (req, res) => {
     const candidat = await Candidat.create(candidatData);
     console.log('Candidat créé:', candidat);
 
-    // Créer la participation si concours_id est fourni
+    // Récupérer les informations du concours pour l'email
+    let concoursData = null;
     let participation = null;
+    
     if (req.body.concours_id) {
-      const participationData = {
-        candidat_id: candidat.id,
-        concours_id: parseInt(req.body.concours_id),
-        stspar: 1,
-        statut: 'inscrit'
-      };
-      console.log('Données participation à créer:', participationData);
-      participation = await Participation.create(participationData);
-      console.log('Participation créée:', participation);
+      try {
+        concoursData = await Concours.findById(parseInt(req.body.concours_id));
+        
+        const participationData = {
+          candidat_id: candidat.id,
+          concours_id: parseInt(req.body.concours_id),
+          stspar: 1,
+          statut: 'inscrit'
+        };
+        console.log('Données participation à créer:', participationData);
+        participation = await Participation.create(participationData);
+        console.log('Participation créée:', participation);
+      } catch (error) {
+        console.error('Erreur lors de la création de la participation:', error);
+      }
+    }
+
+    // Envoyer l'email de confirmation
+    try {
+      const emailResult = await emailService.sendCandidatureConfirmation(candidat, concoursData);
+      console.log('Résultat envoi email:', emailResult);
+    } catch (error) {
+      console.error('Erreur envoi email (non bloquant):', error);
     }
 
     // Retourner la réponse
@@ -77,7 +97,8 @@ router.post('/', upload.single('photo'), async (req, res) => {
       success: true,
       data: {
         ...candidat,
-        participation: participation
+        participation: participation,
+        concours: concoursData
       },
       message: 'Étudiant créé avec succès'
     };
