@@ -130,7 +130,7 @@ class ApiService {
     });
   }
 
-  // Document endpoints
+  // Document endpoints améliorés
   async createDocument(data: { nomdoc: string }): Promise<ApiResponse<Document>> {
     return this.request('/documents', {
       method: 'POST',
@@ -138,8 +138,26 @@ class ApiService {
     });
   }
 
-  // Dossier endpoints (upload de fichiers)
-  async createDossier(data: FormData): Promise<ApiResponse<Dossier[]>> {
+  async getDocumentsByCandidat(candidatId: number): Promise<ApiResponse<Document[]>> {
+    return this.request(`/dossiers/candidat/${candidatId}`);
+  }
+
+  async updateDocumentStatus(documentId: number, statut: string): Promise<ApiResponse<Document>> {
+    return this.request(`/dossiers/${documentId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ statut }),
+    });
+  }
+
+  // Dossier endpoints (upload de fichiers) - amélioré
+  async createDossier(data: FormData): Promise<ApiResponse<Document[]>> {
+    console.log('Envoi des documents vers le serveur...');
+    
+    // Log du contenu du FormData pour debug
+    for (const [key, value] of data.entries()) {
+      console.log(`FormData: ${key}`, value);
+    }
+
     return this.request('/dossiers', {
       method: 'POST',
       body: data,

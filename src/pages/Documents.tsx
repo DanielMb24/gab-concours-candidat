@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, X, CheckCircle } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { apiService } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ const Documents = () => {
 
   const [selectedDocumentType, setSelectedDocumentType] = useState('');
   const [uploadedDocuments, setUploadedDocuments] = useState<{ [key: string]: File }>({});
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const documentOptions: DocumentOption[] = [
     { value: 'cni', label: 'Carte Nationale d\'Identité', required: true },
@@ -33,23 +34,34 @@ const Documents = () => {
       const formData = new FormData();
       formData.append('concours_id', concoursId);
       formData.append('nipcan', nipcan);
+      
       Object.entries(files).forEach(([type, file]) => {
-        formData.append('documents', file, `${type}_${file.name}`);
+        // Préfixer le nom du fichier avec le type pour faciliter la classification côté serveur
+        const prefixedFile = new File([file], `${type}_${file.name}`, { type: file.type });
+        formData.append('documents', prefixedFile);
       });
+      
       return apiService.createDossier(formData);
     },
     onSuccess: (response) => {
+      console.log('Upload réussi:', response);
+      setUploadSuccess(true);
       toast({
-        title: "Documents uploadés !",
-        description: "Vos documents ont été envoyés avec succès",
+        title: "Documents enregistrés !",
+        description: `${response.data?.length || 0} documents ont été uploadés et enregistrés en base de données`,
       });
-      navigate(`/paiement/${encodeURIComponent(decodedCandidatureId)}`);
+      
+      // Attendre un peu pour que l'utilisateur voie le message, puis rediriger
+      setTimeout(() => {
+        navigate(`/paiement/${encodeURIComponent(decodedCandidatureId)}`);
+      }, 2000);
     },
     onError: (error) => {
       console.error('Upload error:', error);
+      setUploadSuccess(false);
       toast({
         title: "Erreur d'upload",
-        description: "Une erreur est survenue lors de l'envoi des documents",
+        description: "Une erreur est survenue lors de l'envoi des documents. Veuillez réessayer.",
         variant: "destructive",
       });
     },
@@ -123,6 +135,12 @@ const Documents = () => {
 
     const nipcan = decodedCandidatureId || 'temp_nip';
 
+    console.log('Envoi des documents:', {
+      files: uploadedDocuments,
+      concoursId: '1',
+      nipcan: nipcan,
+    });
+
     uploadMutation.mutate({
       files: uploadedDocuments,
       concoursId: '1', // À adapter selon le contexte
@@ -153,6 +171,40 @@ const Documents = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">Dépôt des Documents</h1>
             <p className="text-muted-foreground">Candidature: {decodedCandidatureId}</p>
           </div>
+
+          {/* État de l'upload */}
+          {uploadMutation.isPending && (
+            <Card className="mb-8 border-blue-200 bg-blue-50">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  <p className="text-blue-700">Envoi et enregistrement des documents en cours...</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {uploadSuccess && (
+            <Card className="mb-8 border-green-200 bg-green-50">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <p className="text-green-700">Documents enregistrés avec succès ! Redirection vers le paiement...</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {uploadMutation.isError && (
+            <Card className="mb-8 border-red-200 bg-red-50">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                  <p className="text-red-700">Erreur lors de l'enregistrement. Veuillez réessayer.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="mb-8">
             <CardHeader>
@@ -271,13 +323,17 @@ const Documents = () => {
           </Card>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => navigate(-1)}>Retour</Button>
+            <Button variant="outline" onClick={() => navigate(-1)} disabled={uploadMutation.isPending}>
+              Retour
+            </Button>
             <Button
                 onClick={handleContinuer}
                 className="bg-primary hover:bg-primary/90"
-                disabled={uploadMutation.isPending || completionPercentage < 100}
+                disabled={uploadMutation.isPending || completionPercentage < 100 || uploadSuccess}
             >
-              {uploadMutation.isPending ? 'Envoi en cours...' : 'Continuer vers le paiement'}
+              {uploadMutation.isPending ? 'Enregistrement en cours...' : 
+               uploadSuccess ? 'Redirection...' : 
+               'Enregistrer et continuer vers le paiement'}
             </Button>
           </div>
         </div>
