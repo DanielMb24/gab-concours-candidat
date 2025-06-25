@@ -42,7 +42,7 @@ const PaiementContinue = () => {
       }
     };
 
-    initializePage();
+    initializePage().then(r => {});
   }, [decodedNupcan, navigate]);
 
   const handlePaymentSuccess = () => {

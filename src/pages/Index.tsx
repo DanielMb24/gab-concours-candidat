@@ -105,6 +105,55 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Section explicative : étapes clés du processus de candidature */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Comment ça fonctionne</h2>
+
+            {/* Grille pour décomposer le processus en 4 étapes simples */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+              {/* Étape 1 : Choix du concours */}
+              <div className="text-center">
+                <div className="relative">
+                  {/* Numéro d'étape dans un cercle coloré */}
+                  <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+                  {/* Ligne horizontale pour la connexion visuelle entre étapes sur desktop */}
+                  <div className="hidden md:block absolute top-8 w-full h-0.5 bg-gray-200 -right-1/2"></div>
+                </div>
+                <h3 className="font-medium mb-2">Choisir un concours</h3>
+                <p className="text-sm text-muted-foreground">Consultez la liste des concours disponibles et sélectionnez celui qui vous intéresse.</p>
+              </div>
+
+              {/* Étape 2 : Remplissage du formulaire */}
+              <div className="text-center">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+                  <div className="hidden md:block absolute top-8 w-full h-0.5 bg-gray-200 -right-1/2"></div>
+                </div>
+                <h3 className="font-medium mb-2">Remplir le formulaire</h3>
+                <p className="text-sm text-muted-foreground">Saisissez vos informations personnelles et recevez votre NIP unique.</p>
+              </div>
+
+              {/* Étape 3 : Soumission des documents */}
+              <div className="text-center">
+                <div className="relative">
+                  <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+                  <div className="hidden md:block absolute top-8 w-full h-0.5 bg-gray-200 -right-1/2"></div>
+                </div>
+                <h3 className="font-medium mb-2">Soumettre les documents</h3>
+                <p className="text-sm text-muted-foreground">Téléchargez les pièces justificatives requises pour votre dossier.</p>
+              </div>
+
+              {/* Étape 4 : Paiement des frais */}
+              <div className="text-center">
+                <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">4</div>
+                <h3 className="font-medium mb-2">Payer les frais</h3>
+                <p className="text-sm text-muted-foreground">Effectuez le paiement des frais de dossier pour finaliser votre candidature.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <div className="bg-primary/5 border-t">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

@@ -44,8 +44,7 @@ class RouteManagerService {
   getStatutUrl(nupcan: string): string {
     return `/statut/${encodeURIComponent(nupcan)}`;
   }
-
-  // Extrait l'identifiant selon le type de route
+// Extrait l'identifiant selon le type de route
   getIdentifier(params: RouteParams): string {
     const routeType = this.getRouteType(params);
     if (routeType === 'continue-candidature') {

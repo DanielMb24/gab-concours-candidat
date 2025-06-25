@@ -30,14 +30,14 @@ const Header = () => {
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin">
-                <Settings className="h-4 w-4 mr-2" />
-                Administration
-              </Link>
-            </Button>
-          </div>
+          {/*<div className="flex items-center space-x-4">*/}
+          {/*  <Button variant="ghost" size="sm" asChild>*/}
+          {/*    <Link to="/admin">*/}
+          {/*      <Settings className="h-4 w-4 mr-2" />*/}
+          {/*      Administration*/}
+          {/*    </Link>*/}
+          {/*  </Button>*/}
+          {/*</div>*/}
         </div>
       </div>
     </header>

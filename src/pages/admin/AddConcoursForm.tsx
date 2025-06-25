@@ -47,7 +47,15 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
 
     const mutation = useMutation({
         mutationFn: (data: ConcoursFormData) => {
+            // @ts-ignore
             return apiService.createConcours(data);
+        },
+        onError: () => {
+            toast({
+                title: 'Erreur',
+                description: 'Impossible d\'ajouter le concours',
+                variant: 'destructive',
+            });
         },
         onSuccess: () => {
             toast({
@@ -56,13 +64,6 @@ const AddConcoursForm: React.FC<Props> = ({ onSuccess }) => {
             });
             reset();
             onSuccess?.();
-        },
-        onError: () => {
-            toast({
-                title: 'Erreur',
-                description: 'Impossible d\'ajouter le concours',
-                variant: 'destructive',
-            });
         },
     });
 
