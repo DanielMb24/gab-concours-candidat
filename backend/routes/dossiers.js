@@ -52,14 +52,21 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
       });
     }
 
-    // Rechercher le candidat par son NIP
-    const candidat = await Candidat.findByNip(nipcan);
+    // Rechercher le candidat par son NUPCAN au lieu du NIP
+    let candidat;
+    try {
+      candidat = await Candidat.findByNupcan(nipcan);
+    } catch (error) {
+      console.log('Erreur recherche par NUPCAN, tentative par NIP:', error.message);
+      candidat = await Candidat.findByNip(nipcan);
+    }
+
     if (!candidat) {
-      console.log('Candidat non trouvé avec NIP:', nipcan);
+      console.log('Candidat non trouvé avec NIP/NUPCAN:', nipcan);
       return res.status(404).json({
         success: false,
         message: 'Candidat introuvable',
-        errors: ['Candidat avec ce NIP introuvable']
+        errors: ['Candidat avec ce NIP/NUPCAN introuvable']
       });
     }
 

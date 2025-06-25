@@ -1,4 +1,3 @@
-
 import {
   Concours,
   ConcoursApiResponse,
@@ -150,7 +149,7 @@ class ApiService {
     });
   }
 
-  // Dossier endpoints (upload de fichiers) - amélioré
+  // Dossier endpoints (upload de fichiers) - corrigé
   async createDossier(data: FormData): Promise<ApiResponse<Document[]>> {
     console.log('Envoi des documents vers le serveur...');
     
@@ -298,7 +297,7 @@ class ApiService {
     localStorage.removeItem('gabconcours_session');
   }
 
-  // Utilitaire pour générer le format NUPCAN
+  // Utilitaire pour générer le format NUPCAN corrigé
   generateNupcan(): string {
     const now = new Date();
     const mois = String(now.getMonth() + 1).padStart(2, '0');
@@ -309,7 +308,7 @@ class ApiService {
     let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1;
     localStorage.setItem(counterKey, counter.toString());
     
-    return `GABCONCOURS${mois}${jour}${counter}`;
+    return `GABCONCOURS-${mois}-${jour}-${counter}`;
   }
 }
 
