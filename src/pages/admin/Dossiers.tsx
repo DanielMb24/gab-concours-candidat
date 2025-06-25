@@ -7,43 +7,27 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { toast } from '@/hooks/use-toast';
+import { apiService } from '@/services/api';
 
 const Dossiers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
 
-  // Mock data - à remplacer par une vraie API
-  const dossiers = [
-    {
-      id: 1,
-      candidat_nom: 'MBOMA Jean Pierre',
-      candidat_nip: 'CONC2024001',
-      concours: 'École Nationale d\'Administration',
-      statut: 'en_attente',
-      documents_count: 5,
-      date_soumission: '2024-01-15',
-      derniere_modification: '2024-01-15'
-    },
-    {
-      id: 2,
-      candidat_nom: 'NGOMO Marie Claire',
-      candidat_nip: 'CONC2024002',
-      concours: 'École Normale Supérieure',
-      statut: 'valide',
-      documents_count: 6,
-      date_soumission: '2024-01-14',
-      derniere_modification: '2024-01-16'
-    }
-  ];
+  // Récupérer les dossiers depuis l'API
+  const { data: dossiersData, isLoading } = useQuery({
+    queryKey: ['dossiers'],
+    queryFn: () => apiService.getDossiers(),
+  });
 
-  const filteredDossiers = dossiers.filter(d => 
-    d.candidat_nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.candidat_nip.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.concours.toLowerCase().includes(searchTerm.toLowerCase())
+  const dossiers = dossiersData?.data || [];
+
+  const filteredDossiers = dossiers.filter((d: any) => 
+    d.nomcan?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.nupcan?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.libcnc?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusBadge = (status: string) => {
@@ -59,20 +43,44 @@ const Dossiers = () => {
     }
   };
 
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, statut }: { id: number; statut: string }) => 
+      apiService.updateDocumentStatus(id, statut),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dossiers'] });
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut du document a été modifié avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleValidate = (id: number) => {
-    toast({
-      title: "Dossier validé",
-      description: "Le dossier a été validé avec succès",
-    });
+    updateStatusMutation.mutate({ id, statut: 'valide' });
   };
 
   const handleReject = (id: number) => {
-    toast({
-      title: "Dossier rejeté",
-      description: "Le dossier a été rejeté",
-      variant: "destructive",
-    });
+    updateStatusMutation.mutate({ id, statut: 'rejete' });
   };
+
+  if (isLoading) {
+    return (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </AdminLayout>
+      </AdminProtectedRoute>
+    );
+  }
 
   return (
     <AdminProtectedRoute>
@@ -85,7 +93,7 @@ const Dossiers = () => {
             </div>
             <div className="flex space-x-2">
               <Badge variant="outline" className="bg-orange-50">
-                {dossiers.filter(d => d.statut === 'en_attente').length} En attente
+                {dossiers.filter((d: any) => d.statut === 'en_attente').length} En attente
               </Badge>
             </div>
           </div>
@@ -97,7 +105,7 @@ const Dossiers = () => {
                   <Clock className="h-8 w-8 text-orange-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {dossiers.filter(d => d.statut === 'en_attente').length}
+                      {dossiers.filter((d: any) => d.statut === 'en_attente').length}
                     </p>
                     <p className="text-sm text-muted-foreground">En attente</p>
                   </div>
@@ -110,7 +118,7 @@ const Dossiers = () => {
                   <CheckCircle className="h-8 w-8 text-green-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {dossiers.filter(d => d.statut === 'valide').length}
+                      {dossiers.filter((d: any) => d.statut === 'valide').length}
                     </p>
                     <p className="text-sm text-muted-foreground">Validés</p>
                   </div>
@@ -123,7 +131,7 @@ const Dossiers = () => {
                   <XCircle className="h-8 w-8 text-red-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {dossiers.filter(d => d.statut === 'rejete').length}
+                      {dossiers.filter((d: any) => d.statut === 'rejete').length}
                     </p>
                     <p className="text-sm text-muted-foreground">Rejetés</p>
                   </div>
@@ -151,23 +159,29 @@ const Dossiers = () => {
                   <TableRow>
                     <TableHead>Candidat</TableHead>
                     <TableHead>N° Candidature</TableHead>
+                    <TableHead>Type Document</TableHead>
+                    <TableHead>Nom Document</TableHead>
                     <TableHead>Concours</TableHead>
-                    <TableHead>Documents</TableHead>
-                    <TableHead>Date soumission</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredDossiers.map((dossier) => (
+                  {filteredDossiers.map((dossier: any) => (
                     <TableRow key={dossier.id}>
-                      <TableCell className="font-medium">{dossier.candidat_nom}</TableCell>
-                      <TableCell>{dossier.candidat_nip}</TableCell>
-                      <TableCell>{dossier.concours}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{dossier.documents_count} docs</Badge>
+                      <TableCell className="font-medium">
+                        {dossier.prncan} {dossier.nomcan}
                       </TableCell>
-                      <TableCell>{new Date(dossier.date_soumission).toLocaleDateString()}</TableCell>
+                      <TableCell>{dossier.nupcan}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{dossier.type}</Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{dossier.nomdoc}</TableCell>
+                      <TableCell>{dossier.libcnc}</TableCell>
+                      <TableCell>
+                        {new Date(dossier.created_at).toLocaleDateString()}
+                      </TableCell>
                       <TableCell>{getStatusBadge(dossier.statut)}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
@@ -181,6 +195,7 @@ const Dossiers = () => {
                                 size="sm"
                                 onClick={() => handleValidate(dossier.id)}
                                 className="text-green-600 hover:text-green-700"
+                                disabled={updateStatusMutation.isPending}
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
@@ -189,6 +204,7 @@ const Dossiers = () => {
                                 size="sm"
                                 onClick={() => handleReject(dossier.id)}
                                 className="text-red-600 hover:text-red-700"
+                                disabled={updateStatusMutation.isPending}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
@@ -200,6 +216,11 @@ const Dossiers = () => {
                   ))}
                 </TableBody>
               </Table>
+              {filteredDossiers.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Aucun dossier trouvé
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

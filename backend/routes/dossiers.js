@@ -5,7 +5,11 @@ const path = require('path');
 const fs = require('fs');
 const Document = require('../models/Document');
 const Candidat = require('../models/Candidat');
+const CandidatExtended = require('../models/CandidatExtended');
 const router = express.Router();
+
+// Étendre le modèle Candidat avec les méthodes supplémentaires
+CandidatExtended.extendCandidatModel(Candidat);
 
 // Configuration multer pour l'upload de documents
 const storage = multer.diskStorage({
@@ -58,7 +62,12 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
       candidat = await Candidat.findByNupcan(nipcan);
     } catch (error) {
       console.log('Erreur recherche par NUPCAN, tentative par NIP:', error.message);
-      candidat = await Candidat.findByNip(nipcan);
+      try {
+        candidat = await Candidat.findByNip(nipcan);
+      } catch (nipError) {
+        console.log('Erreur recherche par NIP aussi:', nipError.message);
+        candidat = null;
+      }
     }
 
     if (!candidat) {

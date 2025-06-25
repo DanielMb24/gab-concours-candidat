@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 class EmailService {
   constructor() {
     // Configuration pour un service SMTP de test (vous pouvez changer pour un vrai service)
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
       secure: false,

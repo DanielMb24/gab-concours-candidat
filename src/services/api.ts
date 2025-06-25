@@ -1,316 +1,181 @@
-import {
-  Concours,
-  ConcoursApiResponse,
-  Candidat,
-  Participation,
-  Document,
-  Paiement,
-  Etablissement,
-  Filiere,
-  Niveau,
-  Province,
-  Matiere,
-  ApiResponse,
-  Dossier,
-  PaginatedResponse
-} from '@/types/entities';
-
-// Utiliser le backend local
-const API_BASE_URL = 'http://localhost:3002/api';
-
-interface ConcoursFormData {
-  libcnc: string;
-  sescnc: string;
-  debcnc: string;
-  fincnc: string;
-  fracnc: string;
-  etablissement_id: string;
-  stacnc: string;
-  niveau_id?: string;
-  agecnc?: string;
-  etddos?: string;
-}
+import { useQuery } from "@tanstack/react-query";
 
 class ApiService {
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+  constructor(baseURL = 'http://localhost:3002/api') {
+    this.baseURL = baseURL;
+  }
 
-    const config: RequestInit = {
-      headers: {
-        'Accept': 'application/json',
-        ...options?.headers,
-      },
-      ...options,
-    };
-
-    // Ne pas ajouter Content-Type pour FormData
-    if (!(options?.body instanceof FormData) && !config.headers?.['Content-Type']) {
-      config.headers = {
-        ...config.headers,
-        'Content-Type': 'application/json',
-      };
-    }
-
-    console.log(`API Request: ${config.method || 'GET'} ${url}`);
-
-    const response = await fetch(url, config);
-
+  async getNiveaux() {
+    const response = await fetch(`${this.baseURL}/niveaux`);
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API Error: ${response.status} ${response.statusText}`, errorText);
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      throw new Error('Erreur lors de la récupération des niveaux');
+    }
+    return response.json();
+  }
+
+  async getEtablissements() {
+    const response = await fetch(`${this.baseURL}/etablissements`);
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération des établissements');
+    }
+    return response.json();
+  }
+
+  async getConcours() {
+    const response = await fetch(`${this.baseURL}/concours`);
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération des concours');
+    }
+    return response.json();
+  }
+
+  async createEtudiant(data: any) {
+    const response = await fetch(`${this.baseURL}/etudiants`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erreur lors de la création de l\'étudiant');
+    }
+    return response.json();
+  }
+
+  async updateEtudiant(id: string, data: any) {
+    const response = await fetch(`${this.baseURL}/etudiants/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erreur lors de la mise à jour de l\'étudiant');
+    }
+    return response.json();
+  }
+
+  async getEtudiant(id: string) {
+        const response = await fetch(`${this.baseURL}/etudiants/${id}`);
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération de l\'étudiant');
+        }
+        return response.json();
     }
 
-    const data = await response.json();
-    console.log(`API Response:`, data);
-    return data;
+    async findEtudiantByNupcan(nupcan: string) {
+      const response = await fetch(`${this.baseURL}/candidats/nupcan/${nupcan}`);
+      if (!response.ok) {
+          throw new Error('Erreur lors de la récupération du candidat par NUPCAN');
+      }
+      return response.json();
   }
 
-  // Concours endpoints
-  async getConcours(): Promise<ConcoursApiResponse> {
-    return this.request('/concours');
-  }
-
-  async getConcoursById(id: number): Promise<ApiResponse<Concours>> {
-    return this.request(`/concours/${id}`);
-  }
-
-  async createConcours(data: ConcoursFormData): Promise<ApiResponse<Concours>> {
-    return this.request('/concours', {
+  async createCandidat(data: any) {
+    const response = await fetch(`${this.baseURL}/candidats`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erreur lors de la création du candidat');
+    }
+    return response.json();
   }
 
-  async deleteConcours(id: number): Promise<ApiResponse<any>> {
-    return this.request(`/concours/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Candidat endpoints
-  async getCandidats(): Promise<ApiResponse<Candidat[]>> {
-    return this.request('/candidats');
-  }
-
-  async createCandidat(data: {
-    niveau_id: number;
-    nipcan?: string;
-    nomcan: string;
-    prncan: string;
-    maican: string;
-    dtncan: string;
-    telcan: string;
-    phtcan?: string;
-    proorg: number;
-    proact: number;
-    proaff: number;
-    ldncan: string;
-  }): Promise<ApiResponse<Candidat>> {
-    return this.request('/candidats', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async getCandidatByNip(nip: string): Promise<ApiResponse<Candidat>> {
-    return this.request(`/candidats/nip/${nip}`);
-  }
-
-  async getCandidatByNupcan(nupcan: string): Promise<ApiResponse<Candidat>> {
-    return this.request(`/candidats/nupcan/${encodeURIComponent(nupcan)}`);
-  }
-
-  // Etudiant endpoints (pour l'inscription complète avec concours)
-  async createEtudiant(data: FormData): Promise<ApiResponse<Candidat>> {
-    console.log('Envoi des données FormData pour création étudiant');
-    return this.request('/etudiants', {
-      method: 'POST',
-      body: data,
-    });
-  }
-
-  // Document endpoints améliorés
-  async createDocument(data: { nomdoc: string }): Promise<ApiResponse<Document>> {
-    return this.request('/documents', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async getDocumentsByCandidat(candidatId: number): Promise<ApiResponse<Document[]>> {
-    return this.request(`/dossiers/candidat/${candidatId}`);
-  }
-
-  async updateDocumentStatus(documentId: number, statut: string): Promise<ApiResponse<Document>> {
-    return this.request(`/dossiers/${documentId}/status`, {
+  async updateCandidat(id: string, data: any) {
+    const response = await fetch(`${this.baseURL}/candidats/${id}`, {
       method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erreur lors de la mise à jour du candidat');
+    }
+    return response.json();
+  }
+
+  async getCandidat(id: string) {
+    const response = await fetch(`${this.baseURL}/candidats/${id}`);
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération du candidat');
+    }
+    return response.json();
+  }
+
+  async createParticipation(data: any) {
+    const response = await fetch(`${this.baseURL}/participations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erreur lors de la création de la participation');
+    }
+    return response.json();
+  }
+
+   // Méthodes pour les dossiers/documents
+   async createDossier(formData: FormData) {
+    const response = await fetch(`${this.baseURL}/dossiers`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erreur lors de l\'upload des documents');
+    }
+    
+    return response.json();
+  }
+
+  async getDossiers() {
+    const response = await fetch(`${this.baseURL}/dossiers`);
+    
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération des dossiers');
+    }
+    
+    return response.json();
+  }
+
+  async updateDocumentStatus(id: number, statut: string) {
+    const response = await fetch(`${this.baseURL}/dossiers/${id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ statut }),
     });
-  }
-
-  // Dossier endpoints (upload de fichiers) - corrigé
-  async createDossier(data: FormData): Promise<ApiResponse<Document[]>> {
-    console.log('Envoi des documents vers le serveur...');
     
-    // Log du contenu du FormData pour debug
-    for (const [key, value] of data.entries()) {
-      console.log(`FormData: ${key}`, value);
+    if (!response.ok) {
+      throw new Error('Erreur lors de la mise à jour du statut');
     }
-
-    return this.request('/dossiers', {
-      method: 'POST',
-      body: data,
-    });
-  }
-
-  // Participation endpoints
-  async createParticipation(data: {
-    concours_id: number;
-    candidat_id: number;
-    stspar: number;
-  }): Promise<ApiResponse<Participation>> {
-    return this.request('/participations', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  // Paiement endpoints - améliorés
-  async getPaiements(): Promise<ApiResponse<Paiement[]>> {
-    return this.request('/paiements');
-  }
-
-  async createPaiement(data: {
-    nipcan: string;
-    montant: number;
-    methode?: string;
-  }): Promise<ApiResponse<Paiement>> {
-    console.log('Création paiement API:', data);
-    return this.request('/paiements', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async validatePaiement(id: number): Promise<ApiResponse<Paiement>> {
-    return this.request(`/paiements/${id}/validate`, {
-      method: 'POST',
-    });
-  }
-
-  async getPaiementByParticipation(participationId: number): Promise<ApiResponse<Paiement>> {
-    return this.request(`/participations/${participationId}/paiement`);
-  }
-
-  // Province endpoints
-  async getProvinces(): Promise<ApiResponse<Province[]>> {
-    return this.request('/provinces');
-  }
-
-  // Niveau endpoints
-  async getNiveaux(): Promise<ApiResponse<Niveau[]>> {
-    return this.request('/niveaux');
-  }
-
-  // Etablissement endpoints
-  async getEtablissements(): Promise<ApiResponse<Etablissement[]>> {
-    return this.request('/etablissements');
-  }
-
-  async createEtablissement(data: {
-    nom: string;
-    adresse: string;
-    telephone: string;
-    email: string;
-    province_id: number;
-  }): Promise<ApiResponse<Etablissement>> {
-    return this.request('/etablissements', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteEtablissement(id: number): Promise<ApiResponse<any>> {
-    return this.request(`/etablissements/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Statistics endpoints (mise à jour pour inclure les vraies données)
-  async getStatistics(): Promise<ApiResponse<{
-    candidats: number;
-    concours: number;
-    etablissements: number;
-    participations: number;
-    paiements: number;
-  }>> {
-    try {
-      // Récupérer les données réelles pour calculer les statistiques
-      const [candidatsRes, concoursRes, etablissementsRes, paiementsRes] = await Promise.all([
-        this.getCandidats(),
-        this.getConcours(),
-        this.getEtablissements(),
-        this.getPaiements()
-      ]);
-
-      return {
-        data: {
-          candidats: candidatsRes.data?.length || 0,
-          concours: concoursRes.data?.length || 0,
-          etablissements: etablissementsRes.data?.length || 0,
-          participations: candidatsRes.data?.reduce((sum, c) => sum + (c.participations_count || 0), 0) || 0,
-          paiements: paiementsRes.data?.length || 0,
-        }
-      };
-    } catch (error) {
-      console.error('Error fetching statistics:', error);
-      return {
-        data: {
-          candidats: 0,
-          concours: 0,
-          etablissements: 0,
-          participations: 0,
-          paiements: 0,
-        }
-      };
-    }
-  }
-
-  // Session simulation locale
-  async createSession(candidatureId: string): Promise<{ sessionId: string; candidatureId: string }> {
-    const sessionId = `session_${Date.now()}_${candidatureId}`;
-    localStorage.setItem('gabconcours_session', JSON.stringify({
-      sessionId,
-      candidatureId,
-      createdAt: new Date().toISOString()
-    }));
-    return { sessionId, candidatureId };
-  }
-
-  getSession(): { sessionId: string; candidatureId: string } | null {
-    const session = localStorage.getItem('gabconcours_session');
-    return session ? JSON.parse(session) : null;
-  }
-
-  clearSession(): void {
-    localStorage.removeItem('gabconcours_session');
-  }
-
-  // Utilitaire pour générer le format NUPCAN corrigé
-  generateNupcan(): string {
-    const now = new Date();
-    const mois = String(now.getMonth() + 1).padStart(2, '0');
-    const jour = String(now.getDate()).padStart(2, '0');
     
-    // Récupérer le compteur du localStorage ou initialiser à 1
-    const counterKey = `gabconcours_counter_${mois}${jour}`;
-    let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1;
-    localStorage.setItem(counterKey, counter.toString());
-    
-    return `GABCONCOURS-${mois}-${jour}-${counter}`;
+    return response.json();
   }
 }
 
 export const apiService = new ApiService();
-export default apiService;
+
+export const useEtablissements = () => {
+  return useQuery(['etablissements'], () => apiService.getEtablissements());
+};
+
+export const useConcours = () => {
+  return useQuery(['concours'], () => apiService.getConcours());
+};
