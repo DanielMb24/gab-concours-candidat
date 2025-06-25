@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, CreditCard, Smartphone, Clock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { apiService } from '@/services/api';
 
 interface PaymentProcessorProps {
   montant: number;
@@ -24,10 +25,20 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
     setProcessing(true);
     
     try {
-      // Simulation du processus de paiement
+      console.log('Traitement du paiement pour:', candidatureId);
+      
+      // Créer le paiement en base de données
+      const paiementResponse = await apiService.createPaiement({
+        nipcan: candidatureId,
+        montant: montant,
+        methode: selectedMethod
+      });
+
+      console.log('Paiement créé:', paiementResponse);
+
+      // Simuler un délai de traitement
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Simuler un succès de paiement
       toast({
         title: "Paiement réussi !",
         description: `Votre paiement de ${montant.toLocaleString()} FCFA a été traité avec succès.`,
@@ -35,6 +46,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({
       
       onPaymentSuccess();
     } catch (error) {
+      console.error('Erreur de paiement:', error);
       toast({
         title: "Erreur de paiement",
         description: "Une erreur est survenue lors du traitement du paiement.",

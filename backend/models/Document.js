@@ -24,7 +24,7 @@ class Document {
   static async findByCandidat(candidatId) {
     const connection = getConnection();
     const [rows] = await connection.execute(
-      'SELECT * FROM documents WHERE candidat_id = ?',
+      'SELECT * FROM documents WHERE candidat_id = ? ORDER BY created_at DESC',
       [candidatId]
     );
     return rows;
@@ -33,7 +33,7 @@ class Document {
   static async findByConcours(concoursId) {
     const connection = getConnection();
     const [rows] = await connection.execute(
-      'SELECT * FROM documents WHERE concours_id = ?',
+      'SELECT * FROM documents WHERE concours_id = ? ORDER BY created_at DESC',
       [concoursId]
     );
     return rows;
@@ -62,6 +62,18 @@ class Document {
     const connection = getConnection();
     await connection.execute('DELETE FROM documents WHERE id = ?', [id]);
     return true;
+  }
+
+  static async findAll() {
+    const connection = getConnection();
+    const [rows] = await connection.execute(
+      `SELECT d.*, c.nomcan, c.prncan, c.nipcan, c.nupcan, co.libcnc
+       FROM documents d
+       LEFT JOIN candidats c ON d.candidat_id = c.id
+       LEFT JOIN concours co ON d.concours_id = co.id
+       ORDER BY d.created_at DESC`
+    );
+    return rows;
   }
 }
 

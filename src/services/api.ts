@@ -1,3 +1,4 @@
+
 import {
   Concours,
   ConcoursApiResponse,
@@ -176,18 +177,17 @@ class ApiService {
     });
   }
 
-  // Paiement endpoints
+  // Paiement endpoints - améliorés
   async getPaiements(): Promise<ApiResponse<Paiement[]>> {
     return this.request('/paiements');
   }
 
   async createPaiement(data: {
-    candidat_id: number;
-    mntfrai: string;
-    datfrai: string;
-    montant?: number;
+    nipcan: string;
+    montant: number;
     methode?: string;
   }): Promise<ApiResponse<Paiement>> {
+    console.log('Création paiement API:', data);
     return this.request('/paiements', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -296,6 +296,20 @@ class ApiService {
 
   clearSession(): void {
     localStorage.removeItem('gabconcours_session');
+  }
+
+  // Utilitaire pour générer le format NUPCAN
+  generateNupcan(): string {
+    const now = new Date();
+    const mois = String(now.getMonth() + 1).padStart(2, '0');
+    const jour = String(now.getDate()).padStart(2, '0');
+    
+    // Récupérer le compteur du localStorage ou initialiser à 1
+    const counterKey = `gabconcours_counter_${mois}${jour}`;
+    let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1;
+    localStorage.setItem(counterKey, counter.toString());
+    
+    return `GABCONCOURS${mois}${jour}${counter}`;
   }
 }
 
