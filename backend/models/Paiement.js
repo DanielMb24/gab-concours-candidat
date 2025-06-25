@@ -9,8 +9,8 @@ class Paiement {
     const reference = `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     const [result] = await connection.execute(
-      `INSERT INTO paiements (candidat_id, mntfrai, datfrai, montant, reference, statut)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO paiements (candidat_id, mntfrai, datfrai, montant, reference, statut, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         paiementData.candidat_id,
         paiementData.mntfrai,
@@ -33,6 +33,15 @@ class Paiement {
     return rows[0] || null;
   }
 
+  static async findByCandidat(candidatId) {
+    const connection = getConnection();
+    const [rows] = await connection.execute(
+      'SELECT * FROM paiements WHERE candidat_id = ? ORDER BY created_at DESC',
+      [candidatId]
+    );
+    return rows;
+  }
+
   static async findByParticipation(participationId) {
     const connection = getConnection();
     const [rows] = await connection.execute(
@@ -47,11 +56,23 @@ class Paiement {
   static async validate(id) {
     const connection = getConnection();
     await connection.execute(
-      'UPDATE paiements SET statut = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      'UPDATE paiements SET statut = ?, updated_at = NOW() WHERE id = ?',
       ['valide', id]
     );
 
     return this.findById(id);
+  }
+
+  static async findAll() {
+    const connection = getConnection();
+    const [rows] = await connection.execute(
+      `SELECT p.*, c.nomcan, c.prncan, c.nipcan, c.nupcan, co.libcnc
+       FROM paiements p
+       LEFT JOIN candidats c ON p.candidat_id = c.id
+       LEFT JOIN concours co ON c.concours_id = co.id
+       ORDER BY p.created_at DESC`
+    );
+    return rows;
   }
 }
 

@@ -42,6 +42,8 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
   try {
     const { concours_id, nipcan } = req.body;
 
+    console.log('Données reçues:', { concours_id, nipcan, filesCount: req.files?.length });
+
     if (!concours_id || !nipcan) {
       return res.status(400).json({
         success: false,
@@ -53,12 +55,15 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
     // Rechercher le candidat par son NIP
     const candidat = await Candidat.findByNip(nipcan);
     if (!candidat) {
+      console.log('Candidat non trouvé avec NIP:', nipcan);
       return res.status(404).json({
         success: false,
         message: 'Candidat introuvable',
         errors: ['Candidat avec ce NIP introuvable']
       });
     }
+
+    console.log('Candidat trouvé:', candidat);
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
@@ -89,6 +94,12 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
         documentType = 'autres';
       }
 
+      console.log('Traitement du fichier:', {
+        originalName: fileName,
+        type: documentType,
+        filename: file.filename
+      });
+
       // Enregistrer le document en base de données
       const documentData = {
         candidat_id: candidat.id,
@@ -99,8 +110,11 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
         statut: 'en_attente'
       };
 
+      console.log('Données du document à insérer:', documentData);
+
       const savedDocument = await Document.create(documentData);
       savedDocuments.push(savedDocument);
+      console.log('Document enregistré:', savedDocument);
     }
 
     console.log(`${savedDocuments.length} documents enregistrés pour le candidat ${nipcan}`);
@@ -132,6 +146,25 @@ router.get('/candidat/:candidatId', async (req, res) => {
       success: true,
       data: documents,
       message: 'Documents récupérés avec succès'
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des documents:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      errors: [error.message]
+    });
+  }
+});
+
+// GET /api/dossiers - Récupérer tous les documents avec infos candidats
+router.get('/', async (req, res) => {
+  try {
+    const documents = await Document.findAll();
+    res.json({
+      success: true,
+      data: documents,
+      message: 'Tous les documents récupérés avec succès'
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des documents:', error);
