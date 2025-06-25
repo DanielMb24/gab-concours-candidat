@@ -1,4 +1,3 @@
-
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -51,31 +50,26 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
     if (!concours_id || !nupcan) {
       return res.status(400).json({
         success: false,
-        message: 'Concours ID et NIP candidat requis',
-        errors: ['concours_id et nipcan sont obligatoires']
+        message: 'Concours ID et NUPCAN requis',
+        errors: ['concours_id et nupcan sont obligatoires']
       });
     }
 
-    // Rechercher le candidat par son NUPCAN au lieu du NIP
+    // Rechercher le candidat par son NUPCAN
     let candidat;
     try {
       candidat = await Candidat.findByNupcan(nupcan);
     } catch (error) {
-      console.log('Erreur recherche par NUPCAN, tentative par NIP:', error.message);
-      try {
-        candidat = await Candidat.findByNip(nupcan);
-      } catch (nipError) {
-        console.log('Erreur recherche par NIP aussi:', nipError.message);
-        candidat = null;
-      }
+      console.log('Erreur recherche par NUPCAN:', error.message);
+      candidat = null;
     }
 
     if (!candidat) {
-      console.log('Candidat non trouvé avec NIP/NUPCAN:', nupcan);
+      console.log('Candidat non trouvé avec NUPCAN:', nupcan);
       return res.status(404).json({
         success: false,
         message: 'Candidat introuvable',
-        errors: ['Candidat avec ce NIP/NUPCAN introuvable']
+        errors: ['Candidat avec ce NUPCAN introuvable']
       });
     }
 
