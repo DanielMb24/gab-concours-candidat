@@ -1,10 +1,9 @@
-//
 // const nodemailer = require('nodemailer');
+// require('dotenv').config();
 //
 // class EmailService {
 //   constructor() {
-//     // Configuration pour un service SMTP de test (vous pouvez changer pour un vrai service)
-//     this.transporter = nodemailer.createTransporter({
+//     this.transporter = nodemailer.createTransport({
 //       host: 'smtp.gmail.com',
 //       port: 587,
 //       secure: false,
@@ -20,11 +19,8 @@
 //       const emailTemplate = `
 //         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
 //           <h2 style="color: #2563eb;">Confirmation de votre candidature - GABConcours</h2>
-//
 //           <p>Bonjour <strong>${candidatData.prncan} ${candidatData.nomcan}</strong>,</p>
-//
 //           <p>Votre candidature a été enregistrée avec succès !</p>
-//
 //           <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
 //             <h3 style="color: #1f2937; margin-top: 0;">Informations de votre candidature</h3>
 //             <p><strong>Numéro de candidature (NUPCAN):</strong> ${candidatData.nupcan}</p>
@@ -33,7 +29,6 @@
 //             <p><strong>Téléphone:</strong> ${candidatData.telcan}</p>
 //             <p><strong>Date de naissance:</strong> ${candidatData.dtncan}</p>
 //           </div>
-//
 //           <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
 //             <h4 style="color: #92400e; margin-top: 0;">Étapes suivantes</h4>
 //             <ol style="color: #92400e;">
@@ -42,11 +37,8 @@
 //               <li>Attendez la validation de votre dossier</li>
 //             </ol>
 //           </div>
-//
 //           <p>Conservez précieusement votre numéro de candidature <strong>${candidatData.nupcan}</strong>, il vous sera demandé pour suivre l'état de votre dossier.</p>
-//
 //           <p>Pour toute question, contactez-nous à gabconcours@contact.ga</p>
-//
 //           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
 //           <p style="color: #6b7280; font-size: 12px;">
 //             Cet email a été envoyé automatiquement par la plateforme GABConcours.<br>

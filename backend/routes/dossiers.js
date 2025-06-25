@@ -44,11 +44,11 @@ const upload = multer({
 // POST /api/dossiers - Upload de documents
 router.post('/', upload.array('documents', 10), async (req, res) => {
   try {
-    const { concours_id, nipcan } = req.body;
+    const { concours_id, nupcan } = req.body;
 
-    console.log('Données reçues:', { concours_id, nipcan, filesCount: req.files?.length });
+    console.log('Données reçues:', { concours_id, nupcan, filesCount: req.files?.length });
 
-    if (!concours_id || !nipcan) {
+    if (!concours_id || !nupcan) {
       return res.status(400).json({
         success: false,
         message: 'Concours ID et NIP candidat requis',
@@ -59,11 +59,11 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
     // Rechercher le candidat par son NUPCAN au lieu du NIP
     let candidat;
     try {
-      candidat = await Candidat.findByNupcan(nipcan);
+      candidat = await Candidat.findByNupcan(nupcan);
     } catch (error) {
       console.log('Erreur recherche par NUPCAN, tentative par NIP:', error.message);
       try {
-        candidat = await Candidat.findByNip(nipcan);
+        candidat = await Candidat.findByNip(nupcan);
       } catch (nipError) {
         console.log('Erreur recherche par NIP aussi:', nipError.message);
         candidat = null;
@@ -71,7 +71,7 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
     }
 
     if (!candidat) {
-      console.log('Candidat non trouvé avec NIP/NUPCAN:', nipcan);
+      console.log('Candidat non trouvé avec NIP/NUPCAN:', nupcan);
       return res.status(404).json({
         success: false,
         message: 'Candidat introuvable',
@@ -133,7 +133,7 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
       console.log('Document enregistré:', savedDocument);
     }
 
-    console.log(`${savedDocuments.length} documents enregistrés pour le candidat ${nipcan}`);
+    console.log(`${savedDocuments.length} documents enregistrés pour le candidat ${nupcan}`);
 
     res.status(201).json({ 
       success: true, 

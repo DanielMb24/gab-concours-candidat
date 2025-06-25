@@ -30,10 +30,10 @@ const Documents = () => {
   ];
 
   const uploadMutation = useMutation({
-    mutationFn: async ({ files, concoursId, nipcan }: { files: { [key: string]: File }; concoursId: string; nipcan: string; }) => {
+    mutationFn: async ({ files, concoursId, nupcan }: { files: { [key: string]: File }; concoursId: string; nupcan: string; }) => {
       const formData = new FormData();
       formData.append('concours_id', concoursId);
-      formData.append('nipcan', nipcan);
+      formData.append('nupcan', nupcan);
       
       Object.entries(files).forEach(([type, file]) => {
         // Préfixer le nom du fichier avec le type pour faciliter la classification côté serveur
@@ -133,18 +133,18 @@ const Documents = () => {
       return;
     }
 
-    const nipcan = decodedCandidatureId || 'temp_nip';
+    const nupcan = decodedCandidatureId || 'temp_nip';
 
     console.log('Envoi des documents:', {
       files: uploadedDocuments,
       concoursId: '1',
-      nipcan: nipcan,
+      nupcan: nupcan,
     });
 
     uploadMutation.mutate({
       files: uploadedDocuments,
       concoursId: '1', // À adapter selon le contexte
-      nipcan: nipcan,
+      nupcan: nupcan,
     });
   };
 
