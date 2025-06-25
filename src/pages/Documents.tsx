@@ -137,7 +137,7 @@ const Documents = () => {
 
     console.log('Envoi des documents:', {
       files: uploadedDocuments,
-      concoursId: '1',
+      concoursId: '',
       nupcan: nupcan,
     });
 

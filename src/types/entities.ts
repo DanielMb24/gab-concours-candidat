@@ -52,7 +52,7 @@ export interface Dossier {
   concour_id: string;
   docdsr: string;
   document_id: number;
-  nipcan: string;
+  nupcan: string;
   created_at: string;
   updated_at: string;
 }

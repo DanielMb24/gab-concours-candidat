@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 class ApiService {
-  private baseURL: string;
+  private readonly baseURL: string;
 
   constructor(baseURL = 'http://localhost:3002/api') {
     this.baseURL = baseURL;
