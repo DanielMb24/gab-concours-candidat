@@ -41,12 +41,6 @@ const Documents = () => {
         formData.append('documents', prefixedFile);
       });
       
-      console.log('Envoi des documents avec FormData:', {
-        concours_id: concoursId,
-        nupcan: nupcan,
-        files: Object.keys(files)
-      });
-      
       return apiService.createDossier(formData);
     },
     onSuccess: (response) => {
@@ -139,12 +133,11 @@ const Documents = () => {
       return;
     }
 
-    // Utiliser nupcan au lieu de nipcan
-    const nupcan = decodedCandidatureId || 'temp_nupcan';
+    const nupcan = decodedCandidatureId || 'temp_nip';
 
     console.log('Envoi des documents:', {
       files: uploadedDocuments,
-      concoursId: '1',
+      concoursId: '',
       nupcan: nupcan,
     });
 
