@@ -1,6 +1,4 @@
-
 const cors = require('cors');
-
 const corsOptions = {
   origin: [
     'http://localhost:5173',
@@ -11,12 +9,10 @@ const corsOptions = {
     'http://127.0.0.1:3002',
     'http://localhost:8082',
     'http://127.0.0.1:8082'
-
   ],
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 };
-
 module.exports = cors(corsOptions);
