@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import {useMutation, useQuery} from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +16,6 @@ const Documents = () => {
   const navigate = useNavigate();
 
   const decodedCandidatureId = decodeURIComponent(candidatureId || '');
-
   const [selectedDocumentType, setSelectedDocumentType] = useState('');
   const [uploadedDocuments, setUploadedDocuments] = useState<{ [key: string]: File }>({});
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -29,40 +28,51 @@ const Documents = () => {
     { value: 'autres', label: 'Autres documents', required: false },
   ];
 
+  const { data: concoursData } = useQuery({ queryKey: ['concours'], queryFn: () => apiService.getConcours() });
+  const concoursId = concoursData?.data?.[0]?.id?.toString() || '2';
+
   const uploadMutation = useMutation({
-    mutationFn: async ({ files, concoursId, nupcan }: { files: { [key: string]: File }; concoursId: string; nupcan: string; }) => {
+    mutationFn: async ({ files, concoursId, nupcan }: { files: { [key: string]: File }; concoursId: string; nupcan: string }) => {
+      if (!nupcan) {
+        throw new Error('NUPCAN est requis pour l\'upload des documents');
+      }
+
       const formData = new FormData();
       formData.append('concours_id', concoursId);
       formData.append('nupcan', nupcan);
-      
+
       Object.entries(files).forEach(([type, file]) => {
-        // Préfixer le nom du fichier avec le type pour faciliter la classification côté serveur
         const prefixedFile = new File([file], `${type}_${file.name}`, { type: file.type });
         formData.append('documents', prefixedFile);
       });
-      
+
+      console.log('Envoi des documents avec FormData:', {
+        concours_id: concoursId,
+        nupcan: nupcan,
+        files: Object.keys(files).map(type => ({ type, name: files[type].name })),
+      });
+
       return apiService.createDossier(formData);
     },
     onSuccess: (response) => {
       console.log('Upload réussi:', response);
       setUploadSuccess(true);
       toast({
-        title: "Documents enregistrés !",
+        title: 'Documents enregistrés !',
         description: `${response.data?.length || 0} documents ont été uploadés et enregistrés en base de données`,
       });
-      
-      // Attendre un peu pour que l'utilisateur voie le message, puis rediriger
+
       setTimeout(() => {
         navigate(`/paiement/${encodeURIComponent(decodedCandidatureId)}`);
       }, 2000);
     },
     onError: (error) => {
-      console.error('Upload error:', error);
+      console.error('Erreur d\'upload:', error);
       setUploadSuccess(false);
       toast({
-        title: "Erreur d'upload",
-        description: "Une erreur est survenue lors de l'envoi des documents. Veuillez réessayer.",
-        variant: "destructive",
+        title: 'Erreur d\'upload',
+        description: 'Une erreur est survenue lors de l\'envoi des documents. Veuillez réessayer.',
+        variant: 'destructive',
       });
     },
   });
@@ -73,13 +83,13 @@ const Documents = () => {
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      toast({ title: "Fichier trop volumineux", description: "Le fichier ne doit pas dépasser 5MB", variant: "destructive" });
+      toast({ title: 'Fichier trop volumineux', description: 'Le fichier ne doit pas dépasser 5MB', variant: 'destructive' });
       return;
     }
 
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
     if (!allowedTypes.includes(file.type)) {
-      toast({ title: "Format non supporté", description: "Seuls les fichiers PDF, JPEG et PNG sont acceptés", variant: "destructive" });
+      toast({ title: 'Format non supporté', description: 'Seuls les fichiers PDF, JPEG et PNG sont acceptés', variant: 'destructive' });
       return;
     }
 
@@ -89,7 +99,7 @@ const Documents = () => {
     }));
 
     toast({
-      title: "Document ajouté",
+      title: 'Document ajouté',
       description: `${getDocumentLabel(selectedDocumentType)} ajouté avec succès`,
     });
 
@@ -104,8 +114,8 @@ const Documents = () => {
     });
 
     toast({
-      title: "Document supprimé",
-      description: "Le document a été retiré de votre dossier",
+      title: 'Document supprimé',
+      description: 'Le document a été retiré de votre dossier',
     });
   };
 
@@ -117,33 +127,41 @@ const Documents = () => {
     if (missingRequired.length > 0) {
       const missingLabels = missingRequired.map(type => getDocumentLabel(type)).join(', ');
       toast({
-        title: "Documents manquants",
+        title: 'Documents manquants',
         description: `Documents obligatoires manquants: ${missingLabels}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
       return;
     }
 
     if (Object.keys(uploadedDocuments).length === 0) {
       toast({
-        title: "Aucun document",
-        description: "Veuillez ajouter au moins un document",
-        variant: "destructive",
+        title: 'Aucun document',
+        description: 'Veuillez ajouter au moins un document',
+        variant: 'destructive',
       });
       return;
     }
 
-    const nupcan = decodedCandidatureId || 'temp_nip';
+    const nupcan = decodedCandidatureId;
+    if (!nupcan) {
+      toast({
+        title: 'Erreur de candidature',
+        description: 'NUPCAN invalide. Veuillez vérifier votre candidature.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     console.log('Envoi des documents:', {
       files: uploadedDocuments,
-      concoursId: '',
+      concoursId: concoursId,
       nupcan: nupcan,
     });
 
     uploadMutation.mutate({
       files: uploadedDocuments,
-      concoursId: '1', // À adapter selon le contexte
+      concoursId: concoursId,
       nupcan: nupcan,
     });
   };
@@ -172,38 +190,37 @@ const Documents = () => {
             <p className="text-muted-foreground">Candidature: {decodedCandidatureId}</p>
           </div>
 
-          {/* État de l'upload */}
           {uploadMutation.isPending && (
-            <Card className="mb-8 border-blue-200 bg-blue-50">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                  <p className="text-blue-700">Envoi et enregistrement des documents en cours...</p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="mb-8 border-blue-200 bg-blue-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <p className="text-blue-700">Envoi et enregistrement des documents en cours...</p>
+                  </div>
+                </CardContent>
+              </Card>
           )}
 
           {uploadSuccess && (
-            <Card className="mb-8 border-green-200 bg-green-50">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                  <p className="text-green-700">Documents enregistrés avec succès ! Redirection vers le paiement...</p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="mb-8 border-green-200 bg-green-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <p className="text-green-700">Documents enregistrés avec succès ! Redirection vers le paiement...</p>
+                  </div>
+                </CardContent>
+              </Card>
           )}
 
           {uploadMutation.isError && (
-            <Card className="mb-8 border-red-200 bg-red-50">
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-3">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
-                  <p className="text-red-700">Erreur lors de l'enregistrement. Veuillez réessayer.</p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="mb-8 border-red-200 bg-red-50">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="h-6 w-6 text-red-600" />
+                    <p className="text-red-700">Erreur lors de l'enregistrement. Veuillez réessayer.</p>
+                  </div>
+                </CardContent>
+              </Card>
           )}
 
           <Card className="mb-8">
@@ -241,7 +258,6 @@ const Documents = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div>
                   <div className="relative">
                     <input
@@ -251,17 +267,23 @@ const Documents = () => {
                         disabled={!selectedDocumentType}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                     />
-                    <div className={`border-2 border-dashed rounded-lg p-4 text-center ${
-                        selectedDocumentType
-                            ? 'border-primary bg-primary/5 hover:bg-primary/10'
-                            : 'border-gray-300 bg-gray-50'
-                    } transition-colors`}>
-                      <Upload className={`h-6 w-6 mx-auto mb-2 ${
-                          selectedDocumentType ? 'text-primary' : 'text-gray-400'
-                      }`} />
-                      <p className={`text-sm ${
-                          selectedDocumentType ? 'text-primary' : 'text-gray-500'
-                      }`}>
+                    <div
+                        className={`border-2 border-dashed rounded-lg p-4 text-center ${
+                            selectedDocumentType
+                                ? 'border-primary bg-primary/5 hover:bg-primary/10'
+                                : 'border-gray-300 bg-gray-50'
+                        } transition-colors`}
+                    >
+                      <Upload
+                          className={`h-6 w-6 mx-auto mb-2 ${
+                              selectedDocumentType ? 'text-primary' : 'text-gray-400'
+                          }`}
+                      />
+                      <p
+                          className={`text-sm ${
+                              selectedDocumentType ? 'text-primary' : 'text-gray-500'
+                          }`}
+                      >
                         {selectedDocumentType
                             ? 'Cliquez pour sélectionner un fichier'
                             : 'Sélectionnez d\'abord un type de document'}
@@ -331,9 +353,11 @@ const Documents = () => {
                 className="bg-primary hover:bg-primary/90"
                 disabled={uploadMutation.isPending || completionPercentage < 100 || uploadSuccess}
             >
-              {uploadMutation.isPending ? 'Enregistrement en cours...' : 
-               uploadSuccess ? 'Redirection...' : 
-               'Enregistrer et continuer vers le paiement'}
+              {uploadMutation.isPending
+                  ? 'Enregistrement en cours...'
+                  : uploadSuccess
+                      ? 'Redirection...'
+                      : 'Enregistrer et continuer vers le paiement'}
             </Button>
           </div>
         </div>

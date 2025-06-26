@@ -153,3 +153,8 @@ export interface DocumentOption {
   label: string;
   required: boolean;
 }
+export interface DocumentOption {
+  value: string;
+  label: string;
+  required: boolean;
+}

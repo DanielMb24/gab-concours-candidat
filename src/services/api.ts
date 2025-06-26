@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 
 class ApiService {
@@ -114,7 +113,6 @@ class ApiService {
   }
 
   async createSession(nupcan: string) {
-    // Méthode simulée pour créer une session
     localStorage.setItem('currentNupcan', nupcan);
     return { success: true, nupcan };
   }
@@ -122,7 +120,7 @@ class ApiService {
   async createEtudiant(data: any) {
     const response = await fetch(`${this.baseURL}/etudiants`, {
       method: 'POST',
-      body: data, // FormData ou JSON selon le cas
+      body: data,
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -223,57 +221,63 @@ class ApiService {
     return response.json();
   }
 
-  // Méthodes pour les dossiers/documents
   async createDossier(formData: FormData) {
+    console.log('Envoi FormData pour création dossier:', { // Log ajouté
+
+      concours_id: formData.get('concours_id'),
+      nupcan: formData.get('nupcan'),
+      files: formData.getAll('documents').map(f => (f instanceof File ? f.name : 'Inconnu'))
+    });
+
     const response = await fetch(`${this.baseURL}/dossiers`, {
       method: 'POST',
       body: formData,
     });
-    
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() || {};
+      console.error('Erreur API:', errorData); // Log ajouté
       throw new Error(errorData.message || 'Erreur lors de l\'upload des documents');
     }
-    
+
     return response.json();
   }
 
   async getDossiers() {
     const response = await fetch(`${this.baseURL}/dossiers`);
-    
     if (!response.ok) {
       throw new Error('Erreur lors de la récupération des dossiers');
     }
-    
-    return response.json();
+
+    return await response.json();
   }
 
-  async updateDocumentStatus(id: number, statut: string) {
-    const response = await fetch(`${this.baseURL}/dossiers/${id}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ statut }),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Erreur lors de la mise à jour du statut');
-    }
-    
-    return response.json();
-  }
+  async updateDocumentStatus(id: number, status: string)  {
+  const response = await fetch(`${this.baseURL}/dossiers/${id}/status`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+  throw new Error('Erreur lors de la mise à jour du statut');
 }
 
-export const apiService = new ApiService();
+return await response.json();
 
+}
+}
+
+
+export const apiService = new ApiService();
 export const useEtablissements = () => {
   return useQuery({
     queryKey: ['etablissements'],
     queryFn: () => apiService.getEtablissements(),
   });
 };
-
 export const useConcours = () => {
   return useQuery({
     queryKey: ['concours'],
