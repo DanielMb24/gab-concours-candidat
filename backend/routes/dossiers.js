@@ -1,4 +1,3 @@
-
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -28,76 +27,66 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB max
-  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    console.log('Multer fileFilter:', { mimetype: file.mimetype, originalname: file.originalname });
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Type de fichier non autorisé'), false);
+      cb(new Error('Type de fichier non autorisé: seuls PDF, JPEG, PNG sont acceptés'), false);
     }
   }
-});
+}).array('documents', 10);
+
+// Gestion des erreurs Multer
+const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    console.error('Erreur Multer:', err);
+    return res.status(400).json({ success: false, message: 'Erreur lors de l\'upload des fichiers', errors: [err.message] });
+  } else if (err) {
+    console.error('Erreur fichier:', err);
+    return res.status(400).json({ success: false, message: 'Erreur lors du traitement des fichiers', errors: [err.message] });
+  }
+  next();
+};
 
 // POST /api/dossiers - Upload de documents
-router.post('/', upload.array('documents', 10), async (req, res) => {
+router.post('/', upload, handleMulterError, async (req, res) => {
   try {
     const { concours_id, nupcan } = req.body;
 
-    console.log('Données reçues:', { concours_id, nupcan, filesCount: req.files?.length });
+    console.log('Données reçues:', {
+      concours_id,
+      nupcan,
+      filesCount: req.files?.length,
+      files: req.files ? req.files.map(f => ({ originalName: f.originalname, filename: f.filename })) : null
+    });
 
-    if (!concours_id || !nupcan) {
-      return res.status(400).json({
-        success: false,
-        message: 'Concours ID et NIP candidat requis',
-        errors: ['concours_id et nipcan sont obligatoires']
-      });
+    if (!concours_id || isNaN(parseInt(concours_id))) {
+      return res.status(400).json({ success: false, message: 'Concours ID invalide', errors: ['concours_id est requis et doit être un nombre'] });
+    }
+    if (!nupcan || typeof nupcan !== 'string') {
+      return res.status(400).json({ success: false, message: 'NUPCAN invalide', errors: ['nupcan est requis et doit être une chaîne'] });
     }
 
-    // Rechercher le candidat par son NUPCAN au lieu du NIP
-    let candidat;
-    try {
-      candidat = await Candidat.findByNupcan(nupcan);
-    } catch (error) {
-      console.log('Erreur recherche par NUPCAN, tentative par NIP:', error.message);
-      try {
-        candidat = await Candidat.findByNip(nupcan);
-      } catch (nipError) {
-        console.log('Erreur recherche par NIP aussi:', nipError.message);
-        candidat = null;
-      }
+    const candidat = await Candidat.findByNupcan(nupcan);
+    if (!candidat || !candidat.id) {
+      console.log('Candidat non trouvé ou ID manquant avec NUPCAN:', nupcan);
+      return res.status(404).json({ success: false, message: 'Candidat introuvable', errors: ['Candidat avec ce NUPCAN introuvable ou ID manquant'] });
     }
-
-    if (!candidat) {
-      console.log('Candidat non trouvé avec NIP/NUPCAN:', nupcan);
-      return res.status(404).json({
-        success: false,
-        message: 'Candidat introuvable',
-        errors: ['Candidat avec ce NIP/NUPCAN introuvable']
-      });
-    }
-
-    console.log('Candidat trouvé:', candidat);
+    console.log('Candidat trouvé:', { id: candidat.id, nupcan: candidat.nupcan });
 
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Aucun document fourni',
-        errors: ['Au moins un document est requis']
-      });
+      return res.status(400).json({ success: false, message: 'Aucun document fourni', errors: ['Au moins un document est requis'] });
     }
 
-    // Traitement des fichiers et enregistrement en base
     const savedDocuments = [];
 
     for (const file of req.files) {
-      // Extraire le type de document du nom du fichier
       const fileName = file.originalname;
-      let documentType = 'document'; // Type par défaut
+      let documentType = 'document';
 
-      // Déterminer le type basé sur le nom du fichier
       if (fileName.toLowerCase().includes('cni') || fileName.toLowerCase().includes('carte_identite')) {
         documentType = 'cni';
       } else if (fileName.toLowerCase().includes('diplome') || fileName.toLowerCase().includes('attestation')) {
@@ -110,13 +99,8 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
         documentType = 'autres';
       }
 
-      console.log('Traitement du fichier:', {
-        originalName: fileName,
-        type: documentType,
-        filename: file.filename
-      });
+      console.log('Traitement du fichier:', { originalName: fileName, type: documentType, filename: file.filename });
 
-      // Enregistrer le document en base de données
       const documentData = {
         candidat_id: candidat.id,
         concours_id: parseInt(concours_id),
@@ -141,9 +125,14 @@ router.post('/', upload.array('documents', 10), async (req, res) => {
       message: `${savedDocuments.length} documents uploadés et enregistrés avec succès`,
       candidat_id: candidat.id
     });
-
   } catch (error) {
-    console.error('Erreur lors de l\'upload et enregistrement:', error);
+    console.error('Erreur détaillée lors de l\'upload et enregistrement:', {
+      message: error.message,
+      stack: error.stack,
+      concours_id: req.body.concours_id,
+      nupcan: req.body.nupcan,
+      files: req.files ? req.files.map(f => ({ originalName: f.originalname, filename: f.filename })) : null
+    });
     res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de l\'enregistrement',
@@ -158,7 +147,7 @@ router.get('/candidat/:candidatId', async (req, res) => {
     const { candidatId } = req.params;
     const documents = await Document.findByCandidat(candidatId);
 
-    res.json({
+    res.status(200).json({
       success: true,
       data: documents,
       message: 'Documents récupérés avec succès'
@@ -177,7 +166,7 @@ router.get('/candidat/:candidatId', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const documents = await Document.findAll();
-    res.json({
+    res.status(200).json({
       success: true,
       data: documents,
       message: 'Tous les documents récupérés avec succès'
@@ -215,7 +204,7 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       data: updatedDocument,
       message: 'Statut du document mis à jour avec succès'
